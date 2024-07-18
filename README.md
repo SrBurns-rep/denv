@@ -1,4 +1,4 @@
-# denv (Dyamic Environment)
+# denv (Dynamic Environment)
 Denv creates a shared memory instance for storing variables for general usage, it enables an easy way to communicate between bash processes.
 
 ## Usage
