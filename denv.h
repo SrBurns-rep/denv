@@ -21,6 +21,10 @@
 #define DENV_MAX_ELEMENTS (1 << 11) // 2048 Bytes
 #define DENV_BLOCK_SIZE (1 << 20) // 1048576 Bytes
 
+#define DENV_A_VERSION 0
+#define DENV_B_VERSION 5
+#define DENV_C_VERSION 1
+
 typedef uintptr_t Word;
 
 typedef enum {
@@ -347,5 +351,51 @@ bool denv_shmem_destroy(char *filename){
 	}
 	return (shmctl(shared_block_id, IPC_RMID, NULL) != DENV_IPC_RESULT_ERROR);
 }
+
+void denv_print_version(void){
+	struct {
+		int a;
+		int b;
+		int c;
+		int d;
+	}version;
+
+	version.a = DENV_A_VERSION;
+	version.b = DENV_B_VERSION;
+	version.c = DENV_C_VERSION;
+
+	char *date_time = __DATE__ __TIME__;
+
+	version.d = denv_hash(date_time);	// disciminator for compiled versions on the same day
+
+	printf("denv %d.%d.%d.%d\n", version.a, version.b, version.c, version.d);
+}
+
+/* TODO:
+int denv_clear_freed(Table *table, ){
+	
+}
+
+int denv_save_to_file(Table *table){
+	
+}
+
+int denv_load_from_file(Table *table){
+	
+}
+
+int denv_expand_table(Table *table){
+	
+}
+
+void denv_print_stats(void){
+	
+}
+
+int denv_load_config_file(char *filename){
+	
+
+}
+*/
 
 #endif /* _DENV_H */

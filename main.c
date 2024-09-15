@@ -57,6 +57,12 @@ int main(int argc, char* argv[]){
 				print_help();
 				break;
 
+			case 'v':
+				{
+					denv_print_version();
+				}
+				break;
+
 			case 's':
 				{
 					if(argc < 3){
