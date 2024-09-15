@@ -111,7 +111,7 @@ void* denv_table_slice_block(Table *table, size_t size){
 	return new_slice;
 }
 
-void denv_table_write_slice(void *slice_ptr, char* name, char* value){
+void denv_table_write_slice(void *slice_ptr, char *name, char * value){
 	assert(slice_ptr != NULL && name != NULL);
 
 	strcpy(slice_ptr, name);
