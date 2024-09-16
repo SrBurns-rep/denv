@@ -9,6 +9,7 @@ void print_help(void) {
 	printf(
 		"Usage: denv [options] <key>, <value>\n"
 		"-h                     Display this information.\n"
+		"-v                     Display current version.\n"
 		"-s <key> <value>       Sets the key with the value provided\n"
 		"-g <key>               Gets the value stored in the key\n"
 		"-d <key>               Deletes the key and value pair\n"
