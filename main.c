@@ -15,10 +15,14 @@ void print_help(void) {
 		"-d <key>               Deletes the key and value pair\n"
 		"-l <key>               Lists all keys\n"
 		"-r                     Removes the attached shmem\n"
+		"-t                     Print stats\n"
+		"-c                     Clear deleted variables from memory\n"
 	);
 }
 
 int main(int argc, char* argv[]){
+
+	char input_buffer[200] = {0};
 
 	if(argc < 2){
 		// print error
@@ -47,7 +51,7 @@ int main(int argc, char* argv[]){
 			perror("sem_init");
 			return -1;
 		}
-		table->flags |= TABLE_IS_INITIALIZED;
+		denv_table_init(table);
 	}
 
 	sem_wait(&table->denv_sem);
@@ -118,6 +122,12 @@ int main(int argc, char* argv[]){
 
 			case 'r':
 
+				printf("Are you sure you want to destroy the shared memory environment? [N/y]\n");
+
+				fgets(input_buffer, sizeof(input_buffer), stdin);
+
+				if(input_buffer[0] != 'y' && input_buffer[0] != 'Y') break;
+
 				if(sem_destroy(&table->denv_sem) == -1){
 					perror("sem_destroy");
 					goto error;
@@ -130,6 +140,17 @@ int main(int argc, char* argv[]){
 					printf("Shared memory environment destroyed successfully.\n");
 				}
 			
+				break;
+
+			case 't':
+				denv_print_stats(table);
+				break;
+
+			case 'c':
+				int err = denv_clear_freed(table);
+				if(err){
+					fprintf(stderr, "Failed to clear table: %i\n", err);
+				}
 				break;
 		}
 	}
