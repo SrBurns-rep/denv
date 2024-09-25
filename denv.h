@@ -251,6 +251,7 @@ void denv_table_set_value(Table *table, char* name, char* value){
 
 char *denv_table_get_value(Table *table, char* name){
 	assert(table != NULL && name != NULL);
+	
 	Word hash = denv_hash(name);
 	Element *e = &table->element.array[hash];
 
@@ -282,6 +283,10 @@ char *denv_table_get_value(Table *table, char* name){
 				}
 			}
 		}	
+	}
+
+	if(!value){
+		printf("no here\n");
 	}
 
 	return value;
@@ -414,16 +419,23 @@ int denv_clear_freed(Table *table){
 
 	// this section has room for optimizations
 	for(int i = 0; i < DENV_MAX_ELEMENTS; i++){
+		printf("%i\n", i);
+		
 		Element *e = &table->element.array[i];
 		Element *coll_e = &table->element.colision_array[i];
 		if(e->flags & ELEMENT_IS_USED){
-			char *name = (char*)table->block[e->data_index];
+			char *name = (char*)&table->block[e->data_index];
 			char *value = denv_table_get_value(table, name);
+			if(!value) break;
 			denv_table_set_value(clean_table, name, value);
 		}
 		if(coll_e->flags & ELEMENT_IS_USED){
-			char *name = (char*)table->block[coll_e->data_index];
+			char *name = (char*)&table->block[coll_e->data_index];
 			char *value = denv_table_get_value(table, name);
+			if(!value) {
+				printf("%s: %s\n", name, value);
+				break;
+			}
 			denv_table_set_value(clean_table, name, value);
 		}
 	}

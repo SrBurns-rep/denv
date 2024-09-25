@@ -20,6 +20,62 @@ void print_help(void) {
 	);
 }
 
+Table  *init(){
+	char *file_name = getenv("HOME");
+	if(file_name == NULL){
+		fprintf(stderr, "HOME environment variable is not set.\n");
+		return NULL;
+	}
+
+	//attach memory block
+	Table *table = denv_shmem_attach(file_name, sizeof(Table));
+
+	if(table == NULL){
+		fprintf(stderr, "Failed to create a shared memory environment.\n");
+		return NULL;
+	}
+
+	if((table->flags & TABLE_IS_INITIALIZED) == 0){
+		int sem_ret = sem_init(&table->denv_sem, 1, 1);
+		if(sem_ret < 0){
+			perror("sem_init");
+			return NULL;
+		}
+		denv_table_init(table);
+	}
+
+	sem_wait(&table->denv_sem);
+
+	return table;
+}
+
+Table  *init_only_table(char **file_name){
+	*file_name = getenv("HOME");
+	if(file_name == NULL){
+		fprintf(stderr, "HOME environment variable is not set.\n");
+		return NULL;
+	}
+
+	//attach memory block
+	Table *table = denv_shmem_attach(*file_name, sizeof(Table));
+
+	if(table == NULL){
+		fprintf(stderr, "Failed to create a shared memory environment.\n");
+		return NULL;
+	}
+
+	if((table->flags & TABLE_IS_INITIALIZED) == 0){
+		int sem_ret = sem_init(&table->denv_sem, 1, 1);
+		if(sem_ret < 0){
+			perror("sem_init");
+			return NULL;
+		}
+		denv_table_init(table);
+	}
+
+	return table;
+}
+
 int main(int argc, char* argv[]){
 
 	char input_buffer[200] = {0};
@@ -31,30 +87,8 @@ int main(int argc, char* argv[]){
 		return -1;
 	}
 
-	char *file_name = getenv("HOME");
-	if(file_name == NULL){
-		fprintf(stderr, "HOME environment variable is not set.\n");
-		return -1;
-	}
-
-	//attach memory block
-	Table *table = denv_shmem_attach(file_name, sizeof(Table));
-
-	if(table == NULL){
-		fprintf(stderr, "Failed to create a shared memory environment.\n");
-		return -1;
-	}
-
-	if((table->flags & TABLE_IS_INITIALIZED) == 0){
-		int sem_ret = sem_init(&table->denv_sem, 1, 1);
-		if(sem_ret < 0){
-			perror("sem_init");
-			return -1;
-		}
-		denv_table_init(table);
-	}
-
-	sem_wait(&table->denv_sem);
+	Table *table = NULL;
+	char *file_name;
 	
 	if(argv[1][0] == '-'){
 		switch(argv[1][1]){
@@ -86,6 +120,9 @@ int main(int argc, char* argv[]){
 						key_value = argv[3];
 					}
 
+					table = init();
+					if(!table) return -1;
+
 					denv_table_set_value(table, key_name, key_value);
 				}
 				break;
@@ -96,6 +133,9 @@ int main(int argc, char* argv[]){
 						fprintf(stderr, "Missing key name.\n");
 						goto error;
 					}
+
+					table = init();
+					if(!table) return -1;
 
 					char *key_name = argv[2];
 
@@ -113,10 +153,17 @@ int main(int argc, char* argv[]){
 					goto error;
 				}
 
+				table = init();
+				if(!table) return -1;
+
 				denv_table_delete_value(table, argv[2]);
 				break;
 
 			case 'l':
+
+				table = init();
+				if(!table) return -1;
+			
 				denv_table_list_values(table);
 				break;
 
@@ -127,6 +174,9 @@ int main(int argc, char* argv[]){
 				fgets(input_buffer, sizeof(input_buffer), stdin);
 
 				if(input_buffer[0] != 'y' && input_buffer[0] != 'Y') break;
+
+				table = init_only_table(&file_name);
+				if(!table) return -1;
 
 				if(sem_destroy(&table->denv_sem) == -1){
 					perror("sem_destroy");
@@ -143,10 +193,16 @@ int main(int argc, char* argv[]){
 				break;
 
 			case 't':
+				table = init();
+				if(!table) return -1;
+				
 				denv_print_stats(table);
 				break;
 
 			case 'c':
+				table = init();
+				if(!table) return -1;
+				
 				int err = denv_clear_freed(table);
 				if(err){
 					fprintf(stderr, "Failed to clear table: %i\n", err);
@@ -155,10 +211,16 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	sem_post(&table->denv_sem);
+	if(table){
+		sem_post(&table->denv_sem);
+	}
+
 	return 0;
 
 	error:;
-	sem_post(&table->denv_sem);
+	if(table){
+		sem_post(&table->denv_sem);
+	}
+
 	return -1;
 }
