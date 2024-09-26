@@ -184,7 +184,8 @@ void denv_table_set_value(Table *table, char* name, char* value){
 			
 		} else {
 			if(e->flags & ELEMENT_HAS_COLISION) {
-				Element *col_e = &table->element.colision_array[e->colision_next];
+				//check all palces with ->colision_next
+				Element *col_e = &table->element.colision_array[e->colision_next & (DENV_MAX_ELEMENTS - 1)];
 				char *col_element_name = (char *) &table->block[col_e->data_index];
 
 				// loop here
@@ -225,6 +226,9 @@ void denv_table_set_value(Table *table, char* name, char* value){
 				e->flags |= ELEMENT_HAS_COLISION;
 				e->colision_next = table->element.colision_used;
 				Element *col_e = &table->element.colision_array[table->element.colision_used];
+
+				assert(table->element.colision_used < DENV_MAX_ELEMENTS);
+				
 				table->element.colision_used++;
 				
 				col_e->flags |= ELEMENT_IS_USED;
@@ -261,6 +265,9 @@ char *denv_table_get_value(Table *table, char* name){
 
 	if(e->flags & ELEMENT_IS_USED){
 		if(strcmp(name, element_name) == 0){
+
+			if(e->flags & ELEMENT_IS_FREED) return NULL;
+		
 			char *data = (char*) &table->block[e->data_index];
 			value = data + strlen(data) + 1;
 		} else {
@@ -277,6 +284,8 @@ char *denv_table_get_value(Table *table, char* name){
 					}
 				}
 
+				if(col_e->flags & ELEMENT_IS_FREED) return NULL;
+
 				if(col_e->flags & ELEMENT_IS_USED){
 					char *data = (char*) &table->block[col_e->data_index];
 					value = data + strlen(data) + 1;				
@@ -285,9 +294,7 @@ char *denv_table_get_value(Table *table, char* name){
 		}	
 	}
 
-	if(!value){
-		printf("no here\n");
-	}
+	assert(value); // it should return a value by here
 
 	return value;
 }
@@ -300,7 +307,7 @@ void denv_table_delete_value(Table *table, char *name){
 	char *element_name = denv_get_element_name(table, hash);
 
 	if(strcmp(name, element_name) == 0){
-		e->flags &= ~(ELEMENT_IS_USED);
+		e->flags |= ELEMENT_IS_FREED;
 	} else {
 		if(e->flags & ELEMENT_HAS_COLISION){
 			Element *col_e = &table->element.colision_array[e->colision_next];
@@ -314,19 +321,23 @@ void denv_table_delete_value(Table *table, char *name){
 					break; //return;
 				}
 			}
-			col_e->flags &= ~(ELEMENT_IS_USED);
+			col_e->flags |= ELEMENT_IS_FREED;
 		}
 	}
 }
 
-void denv_table_list_values(Table *table){
+void denv_table_list_values(Table *table) {
 	for(int i = 0; i < DENV_MAX_ELEMENTS; i++){
-		if(table->element.array[i].flags & ELEMENT_IS_USED){
+
+		Word flags = table->element.array[i].flags;
+
+		if((flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED)) == ELEMENT_IS_USED) {
 			printf("%s\n", (char *) &table->block[table->element.array[i].data_index]);
 		}
-	}
-	for(int i = 0; i < DENV_MAX_ELEMENTS; i++){
-		if(table->element.colision_array[i].flags & ELEMENT_IS_USED){
+		
+		Word col_flags = table->element.colision_array[i].flags;
+		
+		if((col_flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED)) == ELEMENT_IS_USED) {
 			printf("%s\n", (char *) &table->block[table->element.colision_array[i].data_index]);
 		}
 	}
@@ -423,13 +434,14 @@ int denv_clear_freed(Table *table){
 		
 		Element *e = &table->element.array[i];
 		Element *coll_e = &table->element.colision_array[i];
-		if(e->flags & ELEMENT_IS_USED){
+		
+		if((e->flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED)) == ELEMENT_IS_USED){
 			char *name = (char*)&table->block[e->data_index];
 			char *value = denv_table_get_value(table, name);
 			if(!value) break;
 			denv_table_set_value(clean_table, name, value);
 		}
-		if(coll_e->flags & ELEMENT_IS_USED){
+		if((coll_e->flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED)) == ELEMENT_IS_USED){
 			char *name = (char*)&table->block[coll_e->data_index];
 			char *value = denv_table_get_value(table, name);
 			if(!value) {

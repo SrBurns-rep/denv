@@ -13,10 +13,12 @@ void print_help(void) {
 		"-s <key> <value>       Sets the key with the value provided\n"
 		"-g <key>               Gets the value stored in the key\n"
 		"-d <key>               Deletes the key and value pair\n"
-		"-l <key>               Lists all keys\n"
+		"-l                     Lists all keys\n"
 		"-r                     Removes the attached shmem\n"
 		"-t                     Print stats\n"
 		"-c                     Clear deleted variables from memory\n"
+		"-S                     Save denv table to a file\n"
+		"-L                     Load a denv save file\n"
 	);
 }
 
@@ -207,6 +209,33 @@ int main(int argc, char* argv[]){
 				if(err){
 					fprintf(stderr, "Failed to clear table: %i\n", err);
 				}
+				break;
+				
+			case 'S':
+				if(argc < 3){
+					fprintf(stderr, "Missing path to save file.\n");
+					goto error;
+				}
+				
+				table = init();
+				if(!table) return -1;
+
+				denv_save_to_file(table, argv[2]);
+				
+				break;
+				
+			case 'L':
+				if(argc < 3){
+					fprintf(stderr, "Missing path to save file.\n");
+					goto error;
+				}
+				
+				table = init();
+				if(!table) return -1;
+				
+				table = denv_load_from_file(table, argv[2]);
+				if(table == NULL) return -1;
+
 				break;
 		}
 	}
