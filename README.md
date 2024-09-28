@@ -1,5 +1,7 @@
-# denv (Dynamic Environment)
+# denv (<span style="color:blue">d</span>ynamic <span style="color:blue">env</span>ironment)
 Denv creates a shared memory instance for storing variables for general usage, it enables an easy way to communicate between shell processes.
+
+:warning: :construction: **Warning:** Denv is still under development, doesn't rely on it for anything critical.
 
 ## Usage
 Set a variable
