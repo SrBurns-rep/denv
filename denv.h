@@ -22,9 +22,9 @@
 #define DENV_MAX_ELEMENTS (1 << 11) // 2048 Bytes
 #define DENV_BLOCK_SIZE (1 << 20) // 1048576 Bytes
 
-#define DENV_A_VERSION 0
-#define DENV_B_VERSION 5
-#define DENV_C_VERSION 1
+#define DENV_MAJOR_VERSION 0
+#define DENV_MINOR_VERSION 9
+#define DENV_FIX_VERSION 0
 
 #define DENV_MAGIC 0x44454e5600000000ULL
 
@@ -53,6 +53,7 @@ typedef enum {
 }DenvTableFlags;
 
 typedef struct {
+	Word magic; // added it now
 	Word flags;
 	sem_t denv_sem;
 	struct {
@@ -103,6 +104,8 @@ Table *denv_table_init(void *init_ptr){
 	Table *table = init_ptr;
 
 	table->flags |= TABLE_IS_INITIALIZED;
+
+	table->magic = DENV_MAGIC;
 
 	table->element.used = 0;
 	table->element.colision_used = 0;
@@ -246,6 +249,8 @@ void denv_table_set_value(Table *table, char* name, char* value){
 		e->data_word_size = storage_size_in_words / sizeof(Word);
 		e->data_index = table->current_word_block_offset;
 
+		table->element.used++;
+
 		size_t size = storage_size;
 		
 		void *new_data = denv_table_slice_block(table, size);
@@ -308,9 +313,12 @@ void denv_table_delete_value(Table *table, char *name){
 
 	if(strcmp(name, element_name) == 0){
 		e->flags |= ELEMENT_IS_FREED;
+
+		table->element.used--;
+		
 	} else {
 		if(e->flags & ELEMENT_HAS_COLISION){
-			Element *col_e = &table->element.colision_array[e->colision_next];
+			Element *col_e = &table->element.colision_array[e->colision_next & (DENV_MAX_ELEMENTS - 1)];
 			char *col_element_name = (char *) &table->block[col_e->data_index];
 
 			while(strcmp(name, col_element_name)){
@@ -390,9 +398,9 @@ void denv_print_version(void){
 		int d;
 	}version;
 
-	version.a = DENV_A_VERSION;
-	version.b = DENV_B_VERSION;
-	version.c = DENV_C_VERSION;
+	version.a = DENV_MAJOR_VERSION;
+	version.b = DENV_MINOR_VERSION;
+	version.c = DENV_FIX_VERSION;
 
 	char *date_time = __DATE__ __TIME__;
 
@@ -430,7 +438,6 @@ int denv_clear_freed(Table *table){
 
 	// this section has room for optimizations
 	for(int i = 0; i < DENV_MAX_ELEMENTS; i++){
-		printf("%i\n", i);
 		
 		Element *e = &table->element.array[i];
 		Element *coll_e = &table->element.colision_array[i];
@@ -444,10 +451,7 @@ int denv_clear_freed(Table *table){
 		if((coll_e->flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED)) == ELEMENT_IS_USED){
 			char *name = (char*)&table->block[coll_e->data_index];
 			char *value = denv_table_get_value(table, name);
-			if(!value) {
-				printf("%s: %s\n", name, value);
-				break;
-			}
+			if(!value) break;
 			denv_table_set_value(clean_table, name, value);
 		}
 	}
@@ -629,13 +633,13 @@ Table *denv_load_from_file(Table *table, char *pathname){
 	if(ret != Z_OK){
 		fprintf(stderr, "%s: Failed to compress table.\n", __FUNCTION__);
 
-		free(table_file);
-		free(src_file);
+		fclose(table_file);
+		fclose(src_file);
 		return NULL;
 	}
 
-	free(table_file);
-	free(src_file);
+	fclose(table_file);
+	fclose(src_file);
 	return table;
 }
 

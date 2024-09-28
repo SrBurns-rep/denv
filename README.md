@@ -1,5 +1,5 @@
 # denv (Dynamic Environment)
-Denv creates a shared memory instance for storing variables for general usage, it enables an easy way to communicate between bash processes.
+Denv creates a shared memory instance for storing variables for general usage, it enables an easy way to communicate between shell processes.
 
 ## Usage
 Set a variable
@@ -21,4 +21,20 @@ $ denv -l
 Remove shared memory (Deletes everything)
 ```
 $ denv -r
+```
+Denv table cleanup (has to be done manually)
+```
+$ denv -c
+```
+Save denv table to a file
+```
+$ denv -S file-name
+```
+Load denv from a file
+```
+$ denv -L file-name
+```
+Print stats
+```
+$ denv -t
 ```

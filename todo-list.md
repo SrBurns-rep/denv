@@ -1,15 +1,15 @@
-# Plans for the future
+# Denv to-do list
 
 ## To-do for V1.0
 - [x] Option to show current version.
-- [ ] Function to clear freed elements.
-- [ ] Function to save memory to a file.
-- [ ] Function to load memory from a file.
+- [x] Function to clear freed elements.
+- [x] Function to save memory to a file.
+- [x] Function to load memory from a file.
+- [x] Implement statistics and meta-data.
 - [ ] Create automated tests.
 - [ ] Benchmark.
 - [ ] Fix bugs.
 - [ ] Make a man page.
-- [ ] Implement statistics and meta-data.
 - [ ] Implement a cofiguration file in toml.
 - [ ] Fix more bugs and prepare for packaging.
 - [ ] Make a package for .deb, .rpm and archlinux.
