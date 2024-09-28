@@ -624,14 +624,18 @@ Table *denv_load_from_file(Table *table, char *pathname){
 	}
 
 	FILE *src_file = fopen(pathname, "r");
-	if(ferror(src_file)){
+	if(!src_file){
 		perror("fopen");
+		fclose(table_file);
+
+		sem_post(&table->denv_sem); // must do this to avoid blocking the table
+		
 		return NULL;
 	}
 
 	int ret = denv_decompress(src_file, table_file);
 	if(ret != Z_OK){
-		fprintf(stderr, "%s: Failed to compress table.\n", __FUNCTION__);
+		fprintf(stderr, "%s: Failed to decompress table.\n", __FUNCTION__);
 
 		fclose(table_file);
 		fclose(src_file);
