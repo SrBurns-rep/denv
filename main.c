@@ -5,6 +5,10 @@
 #include "denv.h"
 #include <stdio.h>
 
+// commands and possible options
+//static const char[][]
+
+// this will be changed soon, denv will use whole words as commands and have flags as options
 void print_help(void) {
 	printf(
 		"Usage: denv [options] <key>, <value>\n"

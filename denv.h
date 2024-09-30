@@ -24,7 +24,7 @@
 
 #define DENV_MAJOR_VERSION 0
 #define DENV_MINOR_VERSION 9
-#define DENV_FIX_VERSION 1
+#define DENV_FIX_VERSION 2
 
 #define DENV_MAGIC 0x44454e5600000000ULL
 
@@ -37,7 +37,9 @@ typedef uintptr_t Word;
 typedef enum {
 	ELEMENT_IS_USED	=		(1 << 0),
 	ELEMENT_HAS_COLISION = 	(1 << 1),
-	ELEMENT_IS_FREED = 		(1 << 2)
+	ELEMENT_IS_FREED = 		(1 << 2),
+	ELEMENT_IS_ENV = 		(1 << 3),
+	ELEMENT_IS_BEING_READ = (1 << 4)
 }DenvElementFlags;
 
 typedef struct {

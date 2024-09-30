@@ -6,6 +6,14 @@
 - [x] Function to save memory to a file.
 - [x] Function to load memory from a file.
 - [x] Implement statistics and meta-data.
+- [ ] Change denv main to use words as commands instead of signgle letter flags.
+- [ ] Option to load denv in another path.
+- [ ] Function to load environment variables to it.
+- [ ] Function to make an file to source environment variables.
+- [ ] Function to spawn a new `$SHELL` with saved environment variables.
+- [ ] Function to execute a program with saved environment variables.
+- [ ] Read lock for each variable, single write lock for the entire thing.
+- [ ] Option to watch variable and block until it's changed.
 - [ ] Create automated tests.
 - [ ] Benchmark.
 - [ ] Fix bugs.
@@ -19,6 +27,4 @@
 - [ ] Function to expand the memory table.
 - [ ] Add support for locales.
 - [ ] Add a daemon.
-- [ ] Implement a way to have multiple instances.
 - [ ] Maybe add cryptography and access management.
-- [ ] 
