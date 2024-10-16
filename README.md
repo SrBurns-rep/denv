@@ -39,7 +39,7 @@ $ denv save file-name
 ```
 Load denv from a file
 ```
-$ denv list file-name
+$ denv load file-name
 ```
 Print stats
 ```
