@@ -1,6 +1,8 @@
 # denv (dynamic environment)
 Denv creates a shared memory instance for storing variables for general usage, it enables an easy way to communicate between shell processes.
 
+This shared memory instance is globally shared among any call of denv, denv blocks it's call until it's command is complete.
+
 :warning: :construction: **Warning:** Denv is still under development, don't rely on it for anything critical.
 
 ## Dependencies
@@ -9,7 +11,7 @@ Denv creates a shared memory instance for storing variables for general usage, i
 ## Usage
 Set a variable
 ```
-$ denv sed "variable_name" "value"
+$ denv set "variable_name" "value"
 ```
 Get a variable value
 ```
