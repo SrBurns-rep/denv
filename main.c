@@ -110,6 +110,8 @@ char *get_bind_path(char *path_buf, size_t buf_len){
 
 	strncat(path_buf, denv_path, len);
 
+	make_bind_path(path_buf);
+
 	return path_buf;
 }
 
