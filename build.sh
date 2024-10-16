@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-if [[ $1 -eq "debug" ]]
+if [ "$1" = "debug" ]
 then
 	gcc main.c -o denv -lz -g -Og -fsanitize=address,undefined
+	echo "debug mode"
 else
 	gcc main.c -o denv -lz
 fi

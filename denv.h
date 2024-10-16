@@ -17,20 +17,20 @@
 #include <unistd.h>
 #include <zlib.h>
 
-#define DENV_IPC_RESULT_ERROR (-1)
+#define DENV_IPC_RESULT_ERROR 	(-1)
 
-#define DENV_MAX_ELEMENTS (1 << 11) // 2048 Bytes
-#define DENV_BLOCK_SIZE (1 << 20) // 1048576 Bytes
+#define DENV_MAX_ELEMENTS 		(1 << 11) // 2048 Bytes
+#define DENV_BLOCK_SIZE 		(1 << 20) // 1048576 Bytes
 
-#define DENV_MAJOR_VERSION 0
-#define DENV_MINOR_VERSION 9
-#define DENV_FIX_VERSION 2
+#define DENV_MAJOR_VERSION 		0
+#define DENV_MINOR_VERSION 		10
+#define DENV_FIX_VERSION 		0
 
-#define DENV_MAGIC 0x44454e5600000000ULL
+#define DENV_MAGIC 				0x44454e5600000000ULL
 
-#define DENV_CHUNK (1 << 19) //512KiB
+#define DENV_CHUNK 				(1 << 19) //512KiB
 
-#define DENV_COMPRESSION_LEVEL Z_DEFAULT_COMPRESSION
+#define DENV_COMPRESSION_LEVEL 	Z_DEFAULT_COMPRESSION
 
 typedef uintptr_t Word;
 
@@ -160,13 +160,16 @@ char *denv_get_element_name(Table *table, Word element_index){
    it also do collision handling
 */
 
-void denv_table_set_value(Table *table, char* name, char* value){
+void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 	assert(table != NULL && name != NULL);
 	Word hash = denv_hash(name);
 	Element *e = &table->element.array[hash];
 
 	Word storage_size = strlen(name) + strlen(value) + 2;
 	Word storage_size_in_words = denv_round_to_word(storage_size);
+
+	// Do not let external flags mess up with crucial flags
+	flags &= ~(ELEMENT_IS_USED | ELEMENT_IS_BEING_READ | ELEMENT_HAS_COLISION | ELEMENT_IS_FREED);
 
 	if(e->flags & ELEMENT_IS_USED) {
 
@@ -186,6 +189,8 @@ void denv_table_set_value(Table *table, char* name, char* value){
 				denv_table_write_slice(old_data, name, value);
 				return;
 			}
+
+			e->flags |= flags;	
 			
 		} else {
 			if(e->flags & ELEMENT_HAS_COLISION) {
@@ -210,6 +215,9 @@ void denv_table_set_value(Table *table, char* name, char* value){
 						col_e->data_index = table->current_word_block_offset;
 						void *new_data = denv_table_slice_block(table, storage_size);
 						denv_table_write_slice(new_data, name, value);
+
+						col_e->flags |= flags;
+						
 						return;
 					}
 				}
@@ -219,10 +227,16 @@ void denv_table_set_value(Table *table, char* name, char* value){
 					col_e->data_index = table->current_word_block_offset;
 					void *new_data = denv_table_slice_block(table, storage_size);
 					denv_table_write_slice(new_data, name, value);
+
+					col_e->flags |= flags;
+					
 					return;
 				} else {
 					void *old_data = (void*) &table->block[col_e->data_index];
 					denv_table_write_slice(old_data, name, value);
+
+					col_e->flags |= flags;
+					
 					return;
 				}
 	
@@ -241,6 +255,9 @@ void denv_table_set_value(Table *table, char* name, char* value){
 				col_e->data_index = table->current_word_block_offset;
 				void *new_data = denv_table_slice_block(table, storage_size);
 				denv_table_write_slice(new_data, name, value);
+
+				col_e->flags |= flags;
+				
 				return;				
 			}
 		}
@@ -257,6 +274,8 @@ void denv_table_set_value(Table *table, char* name, char* value){
 		
 		void *new_data = denv_table_slice_block(table, size);
 		denv_table_write_slice(new_data, name, value);
+
+		e->flags |= flags;
 	}
 }
 
@@ -382,7 +401,13 @@ bool denv_shmem_detach(void *attached_shmem){
 	return (shmdt(attached_shmem) != DENV_IPC_RESULT_ERROR);
 }
 
-bool denv_shmem_destroy(char *filename){
+bool denv_shmem_destroy(Table *table, char *filename){
+
+	if(sem_destroy(&table->denv_sem) == -1){
+		perror("sem_destroy");
+		return false;
+	}
+
 	int shared_block_id = denv_get_shid(filename, 0);
 
 	if (shared_block_id == DENV_IPC_RESULT_ERROR) {
@@ -448,13 +473,13 @@ int denv_clear_freed(Table *table){
 			char *name = (char*)&table->block[e->data_index];
 			char *value = denv_table_get_value(table, name);
 			if(!value) break;
-			denv_table_set_value(clean_table, name, value);
+			denv_table_set_value(clean_table, name, value, 0);
 		}
 		if((coll_e->flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED)) == ELEMENT_IS_USED){
 			char *name = (char*)&table->block[coll_e->data_index];
 			char *value = denv_table_get_value(table, name);
 			if(!value) break;
-			denv_table_set_value(clean_table, name, value);
+			denv_table_set_value(clean_table, name, value, 0);
 		}
 	}
 
@@ -591,7 +616,7 @@ int denv_decompress(FILE *source, FILE *dest)
     return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 }
 
-void denv_save_to_file(Table *table, char *pathname){
+int denv_save_to_file(Table *table, char *pathname){
 	assert(table && pathname);
 
 	sem_post(&table->denv_sem); // must do this to avoid blocking the table!!
@@ -599,13 +624,13 @@ void denv_save_to_file(Table *table, char *pathname){
 	FILE *table_file = fmemopen(table, table->total_size, "r");
 	if(ferror(table_file)){
 		perror("fmemopen");
-		return;
+		return -1;
 	}
 
 	FILE *dst_file = fopen(pathname, "w");
 	if(ferror(dst_file)){
 		perror("fopen");
-		return;
+		return -1;
 	}
 
 	int ret = denv_compress(table_file, dst_file, DENV_COMPRESSION_LEVEL);
@@ -614,6 +639,10 @@ void denv_save_to_file(Table *table, char *pathname){
 	}
 	fclose(table_file);
 	fclose(dst_file);
+
+	if(ret != Z_OK) return -1;
+
+	return 0;
 }
 
 Table *denv_load_from_file(Table *table, char *pathname){

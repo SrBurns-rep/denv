@@ -6,8 +6,9 @@
 - [x] Function to save memory to a file.
 - [x] Function to load memory from a file.
 - [x] Implement statistics and meta-data.
-- [ ] Change denv main to use words as commands instead of signgle letter flags.
-- [ ] Option to load denv in another path.
+- [x] Change denv main to use words as commands instead of signgle letter flags.
+- [x] Option to load denv in another path.
+- [ ] Load from stdin and save to stdout.
 - [ ] Function to load environment variables to it.
 - [ ] Function to make an file to source environment variables.
 - [ ] Function to spawn a new `$SHELL` with saved environment variables.
@@ -20,7 +21,7 @@
 - [ ] Make a man page.
 - [ ] Implement a cofiguration file in toml.
 - [ ] Fix more bugs and prepare for packaging.
-- [ ] Make a package for .deb, .rpm and archlinux.
+- [ ] Make a package for .deb, .rpm, archlinux and freebsd.
 
 ## To-do for V2.0
 - [ ] Redesign denv to be expandable.
