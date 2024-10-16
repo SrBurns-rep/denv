@@ -24,7 +24,7 @@
 
 #define DENV_MAJOR_VERSION 		0
 #define DENV_MINOR_VERSION 		10
-#define DENV_FIX_VERSION 		3
+#define DENV_FIX_VERSION 		4
 
 #define DENV_MAGIC 				0x44454e5600000000ULL
 
@@ -319,8 +319,6 @@ char *denv_table_get_value(Table *table, char* name){
 			}
 		}	
 	}
-
-	assert(value); // it should return a value by here
 
 	return value;
 }
