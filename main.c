@@ -451,7 +451,7 @@ int main(int argc, char* argv[]){
 			// denv remove -b bind/path		4
 
 			if(argc == 2) {
-				file_name = g_path_buffer;
+				file_name = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
 
 				table = init_only_table(file_name);
 				if(!table) return -1;
@@ -483,7 +483,7 @@ int main(int argc, char* argv[]){
 
 				if(input_buffer[0] != 'y' && input_buffer[0] != 'Y') break;
 			
-				if(denv_shmem_destroy(table, file_name) == false){
+				if(denv_shmem_destroy(table, argv[3]) == false){
 					fprintf(stderr, "Failed to destroy shared memory environment.\n");
 					goto error;
 				} else {
