@@ -9,37 +9,37 @@ Denv creates a shared memory instance for storing variables for general usage, i
 ## Usage
 Set a variable
 ```
-$ denv -s "variable_name" "value"
+$ denv sed "variable_name" "value"
 ```
 Get a variable value
 ```
-$ denv -g "variable_name"
+$ denv get "variable_name"
 ```
 Delete a variable
 ```
-$ denv -d "variable_name"
+$ denv delete "variable_name"
 ```
 List variables
 ```
-$ denv -l
+$ denv list
 ```
 Remove shared memory (Deletes everything)
 ```
-$ denv -r
+$ denv remove
 ```
 Denv table cleanup (has to be done manually)
 ```
-$ denv -c
+$ denv cleanup
 ```
 Save denv table to a file
 ```
-$ denv -S file-name
+$ denv save file-name
 ```
 Load denv from a file
 ```
-$ denv -L file-name
+$ denv list file-name
 ```
 Print stats
 ```
-$ denv -t
+$ denv stats
 ```
