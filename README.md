@@ -8,6 +8,13 @@ This shared memory instance is globally shared among any call of denv, denv bloc
 ## Dependencies
 `gcc` `zlib` `a posix shell (bash, zsh, fish, etc...)`
 
+## Supported systems
+Any linux/bsd with reasonable support for shared memory is prone to work, tested systems are:
+* Arch Linux
+* Ubuntu
+* Debian
+* FreeBSD
+
 ## Usage
 Set a variable
 ```
@@ -37,8 +44,7 @@ Save denv table to a file
 ```
 $ denv save file-name
 ```
-Load denv from a file
-:warning: When loading from a file all current variables are going to be overwritten!
+Load denv from a file (all current variables are going to be overwritten!)
 ```
 $ denv load file-name
 ```

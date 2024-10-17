@@ -57,7 +57,7 @@ static const struct {
 
 void print_help(void) {
 	printf(
-		"Usage: denv [command] [options] <key>, <value>\n"
+		"Usage: denv [command] [options] <key> <value>\n"
 		"\t-h / --help / help             Display this information.\n"
 		"\t-v / --version / version       Display current version.\n"
 		"\tset [-b/-e] <key> <value>      Sets the key with the value provided.\n"
