@@ -38,6 +38,7 @@ Save denv table to a file
 $ denv save file-name
 ```
 Load denv from a file
+:warning: When loading from a file all current variables are going to be overwritten!
 ```
 $ denv load file-name
 ```

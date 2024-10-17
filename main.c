@@ -47,12 +47,12 @@ static const struct {
 	{"set",			true,	"eb:",	SET},
 	{"get",			true,	"b:",	GET},
 	{"delete",		true,	"b:",	DELETE},
-	{"remove",		false,	"b:",	REMOVE}, // remove does not init table
+	{"remove",		false,	"fb:",	REMOVE}, // remove does not init table
 	{"list",		true,	"b:",	LIST},
 	{"stats",		true,	"b:",	STATS},
 	{"cleanup",		true,	"b:",	CLEANUP},
 	{"save",		true,	"b:",  	SAVE},
-	{"load",		true,	"b:",	LOAD}	
+	{"load",		true,	"fb:",	LOAD}	
 };
 
 void print_help(void) {
@@ -64,14 +64,15 @@ void print_help(void) {
 		"\tget [-b] <key>                 Gets the value stored in the key.\n"
 		"\tdelete [-b] <key>              Deletes the key and value pair.\n"
 		"\tlist [-b]                      Lists all keys.\n"
-		"\tremove [-b]                    Removes the attached shmem.\n"
+		"\tremove [-f/-b]                 Removes the attached shmem.\n"
 		"\tstats [-b]                     Print stats.\n"
 		"\tcleanup [-b]                   Clear deleted variables from memory.\n"
 		"\tsave [-b] <filename>           Save denv table to a file.\n"
-		"\tload [-b] <filename>           Load from a denv save file.\n\n"
-		"option -b:        Path to the attached memory.\n"
+		"\tload [-f/-b] <filename>        Load from a denv save file.\n"
+		"\n"
+		"option -b:        Shared memory bind path.\n"
 		"option -e:        Set variable as an envrionment variable.\n"
-		"option -f:        Get only the flags of the variables.\n"
+		"option -f:        Force yes to operations that prompts the user.\n"
 	);
 }
 
@@ -450,7 +451,9 @@ int main(int argc, char* argv[]){
 		case REMOVE: {
 			// -b
 			// denv remove					2
+			// denv remove -f 				3
 			// denv remove -b bind/path		4
+			// denv remove -bf bind/path 	4
 
 			if(argc == 2) {
 				file_name = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
@@ -471,18 +474,30 @@ int main(int argc, char* argv[]){
 					printf("Shared memory environment destroyed successfully.\n");
 				}
 			} else if (argc == 4) {
-				if(strcmp(argv[2], "-b") != 0){
+
+				bool force = false;
+			
+				if((strcmp(argv[2], "-bf") && strcmp(argv[2], "-fb")) == 0) {
+					force = true;
+				}
+				
+				if((strcmp(argv[2], "-b") && strcmp(argv[2], "-bf") && strcmp(argv[2], "-fb")) != 0){
 					fprintf(stderr, "Unknwon option \"%s\".\n", argv[2]);
 					goto error;
 				}
 
 				table = init_only_table(argv[3]);
 				if(!table) return -1;
+
+				if(force == false){
+					printf("Are you sure you want to destroy the shared memory environment? [N/y]\n");
+
+					fgets(input_buffer, sizeof(input_buffer), stdin);
+
+				} else {
+					input_buffer[0] = 'y';
+				}
 				
-				printf("Are you sure you want to destroy the shared memory environment? [N/y]\n");
-
-				fgets(input_buffer, sizeof(input_buffer), stdin);
-
 				if(input_buffer[0] != 'y' && input_buffer[0] != 'Y') break;
 			
 				if(denv_shmem_destroy(table, argv[3]) == false){
@@ -492,8 +507,22 @@ int main(int argc, char* argv[]){
 					printf("Shared memory environment destroyed successfully.\n");
 				}
 			} else if (argc == 3) {
-				fprintf(stderr, "Bind path not given or extra argument given.\n");
-				goto error;
+				if(strcmp(argv[2], "-f") != 0){
+					fprintf(stderr, "Unknwon option \"%s\".\n", argv[2]);
+					goto error;
+				}
+			
+				file_name = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
+
+				table = init_only_table(file_name);
+				if(!table) return -1;
+				
+				if(denv_shmem_destroy(table, file_name) == false){
+					fprintf(stderr, "Failed to destroy shared memory environment.\n");
+					goto error;
+				} else {
+					printf("Shared memory environment destroyed successfully.\n");
+				}
 			} else if (argc > 4) {
 				fprintf(stderr, "Too many arguments.\n");
 				goto error;
@@ -633,28 +662,61 @@ int main(int argc, char* argv[]){
 		case LOAD: {
 			// -b
 			// denv load path/so/save_file					3
+			// denv load -f path/to/save_file				4
 			// denv load -b bind/path path/to/save_file		5
+			// denv load -bf bind/path path/to/save_file 	5
 
 			if(argc == 3) {
+				
+				printf("This will overwrite current variables, Are you sure you want to load \"%s\" to denv? [N/y]\n", argv[2]);
+
+				fgets(input_buffer, sizeof(input_buffer), stdin);
+
+				if(input_buffer[0] != 'y' && input_buffer[0] != 'Y') break;
 
 				table = denv_load_from_file(table, argv[2]);
 				if(table == NULL) goto error;
 				
 			} else if (argc == 5) {
 
-				if(strcmp(argv[2], "-b") != 0) {
+				bool force = false;
+
+				if((strcmp(argv[2], "-bf") && strcmp(argv[2], "-fb")) == 0) {
+					force = true;
+				}
+
+				if((strcmp(argv[2], "-b") && strcmp(argv[2], "-bf") && strcmp(argv[2], "-fb")) != 0) {
 					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
 					goto error;
 				}
 
+				if(force == false){
+					printf("This will overwrite current variables, Are you sure you want to load \"%s\" to denv at \"%s\"? [N/y]\n", argv[4], argv[3]);
+
+					fgets(input_buffer, sizeof(input_buffer), stdin);
+				} else {
+					input_buffer[0] = 'y';
+				}
+				
+				if(input_buffer[0] != 'y' && input_buffer[0] != 'Y') break;
+
 				deinit(table);
+
+				table = init_on_path(argv[3]);
+				if(table == NULL) goto error;
 
 				table = denv_load_from_file(table, argv[4]);
 				if(table == NULL) goto error;
 
 			} else if (argc == 4) {
-				fprintf(stderr, "Missing path or too many arguments.\n");
-				goto error;
+				if(strcmp(argv[2], "-f") != 0) {
+					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
+					goto error;
+				}
+
+				table = denv_load_from_file(table, argv[2]);
+				if(table == NULL) goto error;
+				
 			} else if (argc < 3) {
 				fprintf(stderr, "Missing path to save file.\n");
 				goto error;
