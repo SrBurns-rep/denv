@@ -770,6 +770,11 @@ int main(int argc, char* argv[]){
 				struct timespec ts = {};
 				ts.tv_sec = 0;
 				ts.tv_nsec = POLLING_INTERVAL;
+
+				while (e == NULL) {
+					nanosleep(&ts, NULL);
+					e = denv_table_get_element(table, argv[2]);
+				}
 				
 				while (denv_element_on_update(table, e) == false){
 					nanosleep(&ts, NULL);
