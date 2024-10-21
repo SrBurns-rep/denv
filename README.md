@@ -52,3 +52,7 @@ Print stats
 ```
 $ denv stats
 ```
+Wait until variable changes
+```
+$ denv await variable
+```

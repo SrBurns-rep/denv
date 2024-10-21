@@ -23,8 +23,8 @@
 #define DENV_BLOCK_SIZE 		(1 << 20) // 1048576 Bytes
 
 #define DENV_MAJOR_VERSION 		0
-#define DENV_MINOR_VERSION 		10
-#define DENV_FIX_VERSION 		6
+#define DENV_MINOR_VERSION 		13
+#define DENV_FIX_VERSION 		0
 
 #define DENV_MAGIC 				0x44454e5600000000ULL
 
@@ -35,11 +35,12 @@
 typedef uintptr_t Word;
 
 typedef enum {
-	ELEMENT_IS_USED	=		(1 << 0),
-	ELEMENT_HAS_COLISION = 	(1 << 1),
-	ELEMENT_IS_FREED = 		(1 << 2),
-	ELEMENT_IS_ENV = 		(1 << 3),
-	ELEMENT_IS_BEING_READ = (1 << 4)
+	ELEMENT_IS_USED			= (1 << 0),
+	ELEMENT_HAS_COLISION	= (1 << 1),
+	ELEMENT_IS_FREED		= (1 << 2),
+	ELEMENT_IS_ENV			= (1 << 3),
+	ELEMENT_IS_BEING_READ	= (1 << 4),
+	ELEMENT_IS_UPDATED		= (1 << 5)
 }DenvElementFlags;
 
 typedef struct {
@@ -169,7 +170,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 	Word storage_size_in_words = denv_round_to_word(storage_size);
 
 	// Do not let external flags mess up with crucial flags
-	flags &= ~(ELEMENT_IS_USED | ELEMENT_IS_BEING_READ | ELEMENT_HAS_COLISION | ELEMENT_IS_FREED);
+	flags &= ~(ELEMENT_IS_USED | ELEMENT_IS_BEING_READ | ELEMENT_HAS_COLISION | ELEMENT_IS_FREED | ELEMENT_IS_UPDATED);
 
 	if(e->flags & ELEMENT_IS_USED) {
 
@@ -182,16 +183,18 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 				e->data_index = table->current_word_block_offset;
 				void *new_data = denv_table_slice_block(table, storage_size);
 				denv_table_write_slice(new_data, name, value);
+
+				e->flags |= flags | ELEMENT_IS_UPDATED;
 				return;
 			} else {
 				// rewrite over old data
 				void *old_data = (void*) &table->block[e->data_index];
 				denv_table_write_slice(old_data, name, value);
+
+				e->flags |= flags | ELEMENT_IS_UPDATED;
 				return;
 			}
 
-			e->flags |= flags;	
-			
 		} else {
 			if(e->flags & ELEMENT_HAS_COLISION) {
 				//check all palces with ->colision_next
@@ -216,7 +219,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 						void *new_data = denv_table_slice_block(table, storage_size);
 						denv_table_write_slice(new_data, name, value);
 
-						col_e->flags |= flags;
+						col_e->flags |= flags | ELEMENT_IS_UPDATED;
 						
 						return;
 					}
@@ -228,14 +231,14 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 					void *new_data = denv_table_slice_block(table, storage_size);
 					denv_table_write_slice(new_data, name, value);
 
-					col_e->flags |= flags;
+					col_e->flags |= flags | ELEMENT_IS_UPDATED;
 					
 					return;
 				} else {
 					void *old_data = (void*) &table->block[col_e->data_index];
 					denv_table_write_slice(old_data, name, value);
 
-					col_e->flags |= flags;
+					col_e->flags |= flags | ELEMENT_IS_UPDATED;
 					
 					return;
 				}
@@ -256,7 +259,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 				void *new_data = denv_table_slice_block(table, storage_size);
 				denv_table_write_slice(new_data, name, value);
 
-				col_e->flags |= flags;
+				col_e->flags |= flags | ELEMENT_IS_UPDATED;
 				
 				return;				
 			}
@@ -275,7 +278,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 		void *new_data = denv_table_slice_block(table, size);
 		denv_table_write_slice(new_data, name, value);
 
-		e->flags |= flags;
+		e->flags |= flags | ELEMENT_IS_UPDATED;
 	}
 }
 
@@ -306,6 +309,10 @@ char *denv_table_get_value(Table *table, char* name){
 						col_e = &table->element.colision_array[col_e->colision_next];
 						col_element_name = (char *) &table->block[col_e->data_index];
 					} else {
+						//debug if
+						if(col_e->flags != 0){
+							fprintf(stderr, "%s: error in get loop.\n", __FUNCTION__);
+						}
 						return NULL;
 					}
 				}
@@ -321,6 +328,63 @@ char *denv_table_get_value(Table *table, char* name){
 	}
 
 	return value;
+}
+
+Element *denv_table_get_element(Table *table, char *name){
+	assert(table != NULL && name != NULL);
+	
+	Word hash = denv_hash(name);
+	Element *e = &table->element.array[hash];
+
+	char *element_name = denv_get_element_name(table, hash);
+
+	if(e->flags & ELEMENT_IS_USED){
+		if(strcmp(name, element_name) == 0){
+
+			if(e->flags & ELEMENT_IS_FREED) return NULL;
+
+			return e;
+			
+		} else {
+			if(e->flags & ELEMENT_HAS_COLISION){
+				Element *col_e = &table->element.colision_array[e->colision_next];
+				char *col_element_name = (char *) &table->block[col_e->data_index];
+
+				while(strcmp(name, col_element_name)){
+					if(col_e->flags & ELEMENT_HAS_COLISION){
+						col_e = &table->element.colision_array[col_e->colision_next];
+						col_element_name = (char *) &table->block[col_e->data_index];
+					} else {
+						//debug if
+						if(col_e->flags != 0){
+							fprintf(stderr, "%s: error in get loop.\n", __FUNCTION__);
+						}
+						return NULL;
+					}
+				}
+
+				if(col_e->flags & ELEMENT_IS_FREED) return NULL;
+
+				if(col_e->flags & ELEMENT_IS_USED){
+					return col_e;				
+				}
+			}
+		}	
+	}
+
+	return NULL;	
+}
+
+bool denv_element_on_update(Table *table, Element *element) {
+	
+	if(element->flags & ELEMENT_IS_UPDATED) {
+		sem_wait(&table->denv_sem);
+		element->flags &= ~(ELEMENT_IS_UPDATED);
+		sem_post(&table->denv_sem);
+		return true;
+	}
+
+	return false;
 }
 
 void denv_table_delete_value(Table *table, char *name){
@@ -399,12 +463,7 @@ bool denv_shmem_detach(void *attached_shmem){
 	return (shmdt(attached_shmem) != DENV_IPC_RESULT_ERROR);
 }
 
-bool denv_shmem_destroy(Table *table, char *filename){
-
-	if(sem_destroy(&table->denv_sem) == -1){
-		perror("sem_destroy");
-		return false;
-	}
+bool denv_shmem_destroy(char *filename){
 
 	int shared_block_id = denv_get_shid(filename, 0);
 

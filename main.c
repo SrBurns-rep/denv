@@ -10,12 +10,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <time.h>
 
 #define DENV_BIND_PATH				("/.local/share/denv")
 #define ARRLEN(X) 					(sizeof(X)/sizeof((X)[0]))
 #define BUFF_SIZE 					(1024)
 #define STDIN_VAR_BUFFER_LENGTH		(4096)
 #define PATH_BUFFER_LENGHT			(4096)
+#define POLLING_MILLISECONDS		(1000000)
+#define POLLING_INTERVAL			(100 * POLLING_MILLISECONDS)
 
 typedef enum {
 	UNDEFINED,
@@ -29,7 +32,8 @@ typedef enum {
 	STATS,
 	CLEANUP,
 	SAVE,
-	LOAD
+	LOAD,
+	AWAIT
 }commands_states;
 
 static const struct {
@@ -47,12 +51,13 @@ static const struct {
 	{"set",			true,	"eb:",	SET},
 	{"get",			true,	"b:",	GET},
 	{"delete",		true,	"b:",	DELETE},
-	{"remove",		false,	"fb:",	REMOVE}, // remove does not init table
+	{"remove",		false,	"fb:",	REMOVE}, // remove inits but does not lock table
 	{"list",		true,	"b:",	LIST},
 	{"stats",		true,	"b:",	STATS},
 	{"cleanup",		true,	"b:",	CLEANUP},
 	{"save",		true,	"b:",  	SAVE},
-	{"load",		true,	"fb:",	LOAD}	
+	{"load",		true,	"fb:",	LOAD},
+	{"await",		false,	"b:",	AWAIT} // await inits but does not lock table
 };
 
 void print_help(void) {
@@ -457,9 +462,6 @@ int main(int argc, char* argv[]){
 
 			if(argc == 2) {
 				file_name = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
-
-				table = init_only_table(file_name);
-				if(!table) return -1;
 				
 				printf("Are you sure you want to destroy the shared memory environment? [N/y]\n");
 
@@ -467,7 +469,7 @@ int main(int argc, char* argv[]){
 
 				if(input_buffer[0] != 'y' && input_buffer[0] != 'Y') break;
 			
-				if(denv_shmem_destroy(table, file_name) == false){
+				if(denv_shmem_destroy(file_name) == false){
 					fprintf(stderr, "Failed to destroy shared memory environment.\n");
 					goto error;
 				} else {
@@ -486,9 +488,6 @@ int main(int argc, char* argv[]){
 					goto error;
 				}
 
-				table = init_only_table(argv[3]);
-				if(!table) return -1;
-
 				if(force == false){
 					printf("Are you sure you want to destroy the shared memory environment? [N/y]\n");
 
@@ -500,7 +499,7 @@ int main(int argc, char* argv[]){
 				
 				if(input_buffer[0] != 'y' && input_buffer[0] != 'Y') break;
 			
-				if(denv_shmem_destroy(table, argv[3]) == false){
+				if(denv_shmem_destroy(argv[3]) == false){
 					fprintf(stderr, "Failed to destroy shared memory environment.\n");
 					goto error;
 				} else {
@@ -514,10 +513,8 @@ int main(int argc, char* argv[]){
 			
 				file_name = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
 
-				table = init_only_table(file_name);
-				if(!table) return -1;
 				
-				if(denv_shmem_destroy(table, file_name) == false){
+				if(denv_shmem_destroy(file_name) == false){
 					fprintf(stderr, "Failed to destroy shared memory environment.\n");
 					goto error;
 				} else {
@@ -723,6 +720,65 @@ int main(int argc, char* argv[]){
 			} else if (argc > 5) {
 				fprintf(stderr, "Too many arguments.\n");
 				goto error;				
+			}
+			
+		} break;
+
+		case AWAIT: {
+			// denv await variable
+			// denv await -b some/path variable
+			file_name = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
+			
+			if(argc == 3) {
+
+				table = init_only_table(file_name);
+				if(table == NULL) {
+					fprintf(stderr, "Failed to init table.\n");
+					goto error;
+				}
+			
+				Element *e = denv_table_get_element(table, argv[2]);
+
+				struct timespec ts = {};
+				ts.tv_sec = 0;
+				ts.tv_nsec = POLLING_INTERVAL;
+
+				while (denv_element_on_update(table, e) == false){
+					nanosleep(&ts, NULL);
+				}
+				
+			} else if (argc == 5) {
+
+				if(strcmp(argv[2], "-b") != 0) {
+					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
+					goto error;
+				}
+
+				table = init_only_table(argv[3]);
+				if(table == NULL) {
+					fprintf(stderr, "Failed to init table.\n");
+					goto error;
+				}
+
+				Element *e = denv_table_get_element(table, argv[4]);
+				
+				struct timespec ts = {};
+				ts.tv_sec = 0;
+				ts.tv_nsec = POLLING_INTERVAL;
+				
+				while (denv_element_on_update(table, e) == false){
+					nanosleep(&ts, NULL);
+				}
+						
+			} else if (argc == 4) {
+				fprintf(stderr, "Missing path or too many arguments.\n");
+				goto error;
+			} else if (argc < 3) {
+				fprintf(stderr, "Missing variable name.\n");
+				goto error;
+			} else if (argc > 5) {
+				fprintf(stderr, "Too many arguments.\n");
+				goto error;
 			}
 			
 		} break;
