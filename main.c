@@ -38,26 +38,25 @@ typedef enum {
 
 static const struct {
 	char*	cmd;
-	bool	do_load_table;
 	char*	options;
 	int     state;
 }commands[] = {
-	{"-h",			false,	NULL,	HELP},
-	{"-v",			false,	NULL,	VERSION},
-	{"--help",		false,	NULL,	HELP},
-	{"--version",	false,	NULL,	VERSION},
-	{"help",		false,	NULL,	HELP},
-	{"version",		false,	NULL,	VERSION},
-	{"set",			true,	"eb:",	SET},
-	{"get",			true,	"b:",	GET},
-	{"delete",		true,	"b:",	DELETE},
-	{"remove",		false,	"fb:",	REMOVE}, // remove inits but does not lock table
-	{"list",		true,	"b:",	LIST},
-	{"stats",		true,	"b:",	STATS},
-	{"cleanup",		true,	"b:",	CLEANUP},
-	{"save",		true,	"b:",  	SAVE},
-	{"load",		true,	"fb:",	LOAD},
-	{"await",		false,	"b:",	AWAIT} // await inits but does not lock table
+	{"-h",			NULL,	HELP},
+	{"-v",			NULL,	VERSION},
+	{"--help",		NULL,	HELP},
+	{"--version",	NULL,	VERSION},
+	{"help",		NULL,	HELP},
+	{"version",		NULL,	VERSION},
+	{"set",			"eb:",	SET},
+	{"get",			"b:",	GET},
+	{"delete",		"b:",	DELETE},
+	{"remove",		"fb:",	REMOVE}, // remove inits but does not lock table
+	{"list",		"b:",	LIST},
+	{"stats",		"b:",	STATS},
+	{"cleanup",		"b:",	CLEANUP},
+	{"save",		"b:",  	SAVE},
+	{"load",		"fb:",	LOAD},
+	{"await",		"b:",	AWAIT} // await inits but does not lock table
 };
 
 void print_help(void) {
@@ -244,24 +243,16 @@ int main(int argc, char* argv[]){
 	}
 
 	int state = UNDEFINED;
-	// char *options = NULL;
-	bool load_table = false;
 
 	for(size_t i = 0; i < ARRLEN(commands); i++){
 		if(argv[1][0] == commands[i].cmd[0]){
 			if(strcmp(argv[1], commands[i].cmd) == 0){
 				state = commands[i].state;
-				load_table = commands[i].do_load_table;
 			}
 		}
 	}
 	
 	Table *table = NULL;
-
-	if(load_table){
-		table = init();
-		if(!table) return -1;
-	}
 
 	char *file_name;
 	
@@ -298,6 +289,9 @@ int main(int argc, char* argv[]){
 		
 			if (argc == 4) {
 
+				table = init();
+				if(table == NULL) goto error;
+
 				if(strcmp(argv[3], "-") == 0) {
 					// read from stdin
 					fread(stdin_buffer, sizeof(stdin_buffer) - 1, 1, stdin);
@@ -307,6 +301,10 @@ int main(int argc, char* argv[]){
 				}
 
 			} else if (argc == 5) {
+
+				table = init();
+				if(table == NULL) goto error;
+			
 				// set -e "name" "value"
 				if(strcmp(argv[2], "-e") != 0) {
 					fprintf(stderr, "Unknwon option \"%s\".\n", argv[2]);
@@ -350,8 +348,6 @@ int main(int argc, char* argv[]){
 					goto error;
 				}
 
-				deinit(table);
-
 				// init table on path
 				table = init_on_path(argv[3]);
 				if(table == NULL){
@@ -383,6 +379,10 @@ int main(int argc, char* argv[]){
 			char *value;
 
 			if(argc == 3){
+
+				table = init();
+				if(table == NULL) goto error;
+			
 				value = denv_table_get_value(table, argv[2]);
 				
 			} else if (argc == 5) {
@@ -390,8 +390,6 @@ int main(int argc, char* argv[]){
 					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
 					goto error;
 				}
-
-				deinit(table);
 
 				// init table on path
 				table = init_on_path(argv[3]);
@@ -424,14 +422,16 @@ int main(int argc, char* argv[]){
 			// denv delete -b bind/path var_name	5
 
 			if(argc == 3) {
+
+				table = init();
+				if(table == NULL) goto error;
+			
 				denv_table_delete_value(table, argv[2]);
 			} else if (argc == 5) {
 				if(strcmp(argv[2], "-b") != 0) {
 					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
 					goto error;					
 				}
-
-				deinit(table);
 				
 				// init table on path
 				table = init_on_path(argv[3]);
@@ -533,6 +533,10 @@ int main(int argc, char* argv[]){
 			// denv list -b bind/path 		4
 
 			if(argc == 2) {
+
+				table = init();
+				if(table == NULL) goto error;
+
 				denv_table_list_values(table);
 			} else if (argc == 4) {
 
@@ -541,8 +545,6 @@ int main(int argc, char* argv[]){
 					goto error;
 				}
 			
-				deinit(table);
-
 				table = init_on_path(argv[3]);
 				if(table == NULL) goto error;
 
@@ -563,6 +565,10 @@ int main(int argc, char* argv[]){
 			// denv stats -b bind/path		4
 
 			if(argc == 2) {
+
+				table = init();
+				if(table == NULL) goto error;
+	
 				denv_print_stats(table);
 			} else if (argc == 4) {
 
@@ -570,8 +576,6 @@ int main(int argc, char* argv[]){
 					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
 					goto error;
 				}
-
-				deinit(table);
 
 				table = init_on_path(argv[3]);
 				if(table == NULL) goto error;
@@ -594,6 +598,10 @@ int main(int argc, char* argv[]){
 			// denv cleanup -b bind/path
 			
 			if(argc == 2) {
+
+				table = init();
+				if(table == NULL) goto error;
+			
 				denv_clear_freed(table);
 			} else if (argc == 4) {
 
@@ -601,8 +609,6 @@ int main(int argc, char* argv[]){
 					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
 					goto error;
 				}
-
-				deinit(table);
 
 				table = init_on_path(argv[3]);
 				if(table == NULL) goto error;
@@ -628,6 +634,9 @@ int main(int argc, char* argv[]){
 			
 			if(argc == 3) {
 
+				table = init();
+				if(table == NULL) goto error;
+
 				err = denv_save_to_file(table, argv[2]);
 				if(err) goto error;
 				
@@ -638,7 +647,8 @@ int main(int argc, char* argv[]){
 					goto error;
 				}
 
-				deinit(table);
+				table = init_on_path(argv[4]);
+				if(table == NULL) goto error;
 
 				err = denv_save_to_file(table, argv[4]);
 				if(err) goto error;
@@ -664,6 +674,9 @@ int main(int argc, char* argv[]){
 			// denv load -bf bind/path path/to/save_file 	5
 
 			if(argc == 3) {
+
+				table = init();
+				if(table == NULL) goto error;
 				
 				printf("This will overwrite current variables, Are you sure you want to load \"%s\" to denv? [N/y]\n", argv[2]);
 
@@ -696,8 +709,6 @@ int main(int argc, char* argv[]){
 				}
 				
 				if(input_buffer[0] != 'y' && input_buffer[0] != 'Y') break;
-
-				deinit(table);
 
 				table = init_on_path(argv[3]);
 				if(table == NULL) goto error;
