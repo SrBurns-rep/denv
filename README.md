@@ -1,11 +1,9 @@
 <img align="left" style="width:260px" src="resources/denv-logo.svg" width="260px">
-# denv (dynamic environment)
-Denv creates a shared memory instance for storing variables for general usage, it enables an easy way to communicate between shell processes.
-
-This shared memory instance is globally shared among any call of denv, denv blocks it's call until it's command is complete.
-
+**Denv creates a shared memory instance for storing variables for general usage.** 
+It enables an easy way to communicate between shell processes, this shared memory instance is globally shared among any call of denv, denv blocks it's call until it's command is complete.
 :warning: :construction: **Warning:** Denv is still under development, don't rely on it for anything critical.
-
+<br>
+<br>
 ## Dependencies
 `gcc` `zlib` `a posix shell (bash, zsh, fish, etc...)`
 
