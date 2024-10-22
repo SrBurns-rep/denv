@@ -7,7 +7,9 @@ It enables an easy way to communicate between shell processes, this shared memor
 :warning: :construction: **Warning:** Denv is still under development, don't rely on it for anything critical.
 
 <br>
-<br>
+
+---
+
 ## Dependencies
 `gcc` `zlib` `a posix shell (bash, zsh, fish, etc...)`
 
