@@ -26,8 +26,8 @@ typedef enum {
 	HELP,
 	SET,
 	GET,
-	DELETE,
 	REMOVE,
+	DROP,
 	LIST,
 	STATS,
 	CLEANUP,
@@ -49,14 +49,14 @@ static const struct {
 	{"version",		NULL,	VERSION},
 	{"set",			"eb:",	SET},
 	{"get",			"b:",	GET},
-	{"delete",		"b:",	DELETE},
-	{"remove",		"fb:",	REMOVE}, // remove inits but does not lock table
-	{"list",		"b:",	LIST},
+	{"rm",			"b:",	REMOVE},	// *
+	{"drop",		"fb:",	DROP},		// *
+	{"ls",			"b:",	LIST},		// *
 	{"stats",		"b:",	STATS},
 	{"cleanup",		"b:",	CLEANUP},
 	{"save",		"b:",  	SAVE},
 	{"load",		"fb:",	LOAD},
-	{"await",		"b:",	AWAIT} // await inits but does not lock table
+	{"await",		"b:",	AWAIT}
 };
 
 void print_help(void) {
@@ -66,13 +66,14 @@ void print_help(void) {
 		"\t-v / --version / version       Display current version.\n"
 		"\tset [-b/-e] <key> <value>      Sets the key with the value provided.\n"
 		"\tget [-b] <key>                 Gets the value stored in the key.\n"
-		"\tdelete [-b] <key>              Deletes the key and value pair.\n"
-		"\tlist [-b]                      Lists all keys.\n"
-		"\tremove [-f/-b]                 Removes the attached shmem.\n"
+		"\trm [-b] <key>                  Removes the key and value pair.\n"
+		"\tls [-b]                        Lists all keys.\n"
+		"\tdrop [-f/-b]                   Deletes everything in the attached shmem.\n"
 		"\tstats [-b]                     Print stats.\n"
 		"\tcleanup [-b]                   Clear deleted variables from memory.\n"
 		"\tsave [-b] <filename>           Save denv table to a file.\n"
 		"\tload [-f/-b] <filename>        Load from a denv save file.\n"
+		"\tawait [-b] <key>               Wait for a change in key value.\n"
 		"\n"
 		"option -b:        Shared memory bind path.\n"
 		"option -e:        Set variable as an envrionment variable.\n"
@@ -416,10 +417,10 @@ int main(int argc, char* argv[]){
 
 		} break;
 
-		case DELETE: {
+		case REMOVE: {
 			// -b
-			// denv delete var_name					3
-			// denv delete -b bind/path var_name	5
+			// denv rm var_name					3
+			// denv rm -b bind/path var_name	5
 
 			if(argc == 3) {
 
@@ -453,12 +454,12 @@ int main(int argc, char* argv[]){
 			
 		} break;
 
-		case REMOVE: {
+		case DROP: {
 			// -b
-			// denv remove					2
-			// denv remove -f 				3
-			// denv remove -b bind/path		4
-			// denv remove -bf bind/path 	4
+			// denv drop					2
+			// denv drop -f 				3
+			// denv drop -b bind/path		4
+			// denv drop -bf bind/path 		4
 
 			if(argc == 2) {
 				file_name = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
@@ -529,8 +530,8 @@ int main(int argc, char* argv[]){
 		
 		case LIST: {
 			// -b
-			// denv list					2
-			// denv list -b bind/path 		4
+			// denv ls					2
+			// denv ls -b bind/path 	4
 
 			if(argc == 2) {
 
@@ -781,6 +782,11 @@ int main(int argc, char* argv[]){
 				struct timespec ts = {};
 				ts.tv_sec = 0;
 				ts.tv_nsec = POLLING_INTERVAL;
+
+				while (e == NULL) {
+					nanosleep(&ts, NULL);
+					e = denv_table_get_element(table, argv[4]);
+				}
 				
 				while (denv_element_on_update(table, e) == false){
 					nanosleep(&ts, NULL);

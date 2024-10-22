@@ -29,19 +29,19 @@ Get a variable value
 ```
 $ denv get "variable_name"
 ```
-Delete a variable
+Remove a variable
 ```
-$ denv delete "variable_name"
+$ denv rm "variable_name"
 ```
 List variables
 ```
-$ denv list
+$ denv ls
 ```
-Remove shared memory (Deletes everything)
+Drop shared memory (Deletes everything)
 ```
-$ denv remove
+$ denv drop
 ```
-Denv table cleanup (has to be done manually)
+Denv table cleanup (has to be done manually to clear removed variables)
 ```
 $ denv cleanup
 ```
