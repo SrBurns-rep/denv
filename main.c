@@ -723,7 +723,10 @@ int main(int argc, char* argv[]){
 					goto error;
 				}
 
-				table = denv_load_from_file(table, argv[2]);
+				table = init();
+				if(table == NULL) goto error;
+
+				table = denv_load_from_file(table, argv[3]);
 				if(table == NULL) goto error;
 				
 			} else if (argc < 3) {
