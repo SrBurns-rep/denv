@@ -24,7 +24,7 @@
 
 #define DENV_MAJOR_VERSION 		0
 #define DENV_MINOR_VERSION 		13
-#define DENV_FIX_VERSION 		7
+#define DENV_FIX_VERSION 		8
 
 #define DENV_MAGIC 				0x44454e5600000000ULL
 
@@ -494,15 +494,18 @@ void denv_print_version(void){
 }
 
 void denv_print_stats(Table *table){
+	Word used = table->element.used;
+	Word col_used = table->element.colision_used;
+	Word total = used + col_used;
+
 	printf(
-		"Table total size:                     %lu bytes\n"
-		"Current data block offset:            %lu\n"
-		"Number of elements on hash table:     %lu\n"
-		"Number of elements on colision table: %lu\n",
+		"total_size_bytes, data_offset, used_hash, used_collision, used_total\n"
+		"%lu, %lu, %lu, %lu, %lu\n",
 		 table->total_size,
 		 table->current_word_block_offset,
-		 table->element.used,
-		 table->element.colision_used
+		 used,
+		 col_used,
+		 total
 	);
 }
 
