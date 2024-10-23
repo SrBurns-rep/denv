@@ -6,26 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- Version Index -->
-* [0.13.7](#0.13.7)
-* [0.13.6](#0.13.6)
-* [0.13.2](#0.13.2)
-* [0.13.1](#0.13.1)
-* [0.13.0](#0.13.0)
-* [0.10.6](#0.10.6)
-* [0.10.4](#0.10.4)
-* [0.10.3](#0.10.3)
-* [0.10.2](#0.10.2)
-* [0.10.0](#0.10.0)
-* [0.9.2](#0.9.2)
+* [0.13.7](##0.13.7)
+* [0.13.6](##0.13.6)
+* [0.13.2](##0.13.2)
+* [0.13.1](##0.13.1)
+* [0.13.0](##0.13.0)
+* [0.10.6](##0.10.6)
+* [0.10.4](##0.10.4)
+* [0.10.3](##0.10.3)
+* [0.10.2](##0.10.2)
+* [0.10.0](##0.10.0)
+* [0.9.2](##0.9.2)
 
 <!-- Changelog Description -->
 
-###0.13.7
+### 0.13.7
 
 ### Fixed
 * Loading variables from a file with `-f` option.
 
-##0.13.6
+## 0.13.6
 
 "Unixifying" denv commands
 
@@ -37,17 +37,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Await bug when using `-b` option.
 
-##0.13.2
+## 0.13.2
 
 ### Fixed
 * Denv was loading it's default table even when creating other bind paths.
 
-##0.13.1
+## 0.13.1
 
 ### Fixed
 * Segfault when awaiting a variable not added yet.
 
-##0.13.0
+## 0.13.0
 
 ### Added
 * Flag when element is updated.
@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Removing table no longer loads the table (useful for removing broken tables).
 
-##0.10.6
+## .10.6
 
 ### Added
 * Flag to force yes to operations that prompts the user.
@@ -73,23 +73,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Bug when loading to a different path.
 
-##0.10.4
+## 0.10.4
 
 ### Fixed
 * Bug when trying to get a variable that doesn't exist.
 
-##0.10.3
+## 0.10.3
 
 ### Fixed
 * Denv not creating the path for it's default shared environment.
 
-##0.10.2
+## 0.10.2
 
 ### Fixed
 * Bug when removing denv instances both from denv default bind path.
 * Bug when removing denv from another bind path.
 
-##0.10.0
+## 0.10.0
 
 ### Added
 * Contributors file [CONTRIBUTORS.md](CONTRIBUTORS.md).
@@ -100,7 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Commands are now full words, options are set as flags.
 * License is now GPL-3.
 
-##0.9.2
+## 0.9.2
 
 ### Added
 * This changelog file.
