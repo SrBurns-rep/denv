@@ -499,8 +499,8 @@ void denv_print_stats(Table *table){
 	Word total = used + col_used;
 
 	printf(
-		"total_size_bytes, data_offset, used_hash, used_collision, used_total\n"
-		"%lu, %lu, %lu, %lu, %lu\n",
+		"total_size_bytes,data_offset,used_hash,used_collision,used_total\n"
+		"%lu,%lu,%lu,%lu,%lu\n",
 		 table->total_size,
 		 table->current_word_block_offset,
 		 used,
