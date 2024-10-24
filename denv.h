@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <zlib.h>
+#include <time.h>
 
 #define DENV_IPC_RESULT_ERROR 	(-1)
 
@@ -24,7 +25,7 @@
 
 #define DENV_MAJOR_VERSION 		0
 #define DENV_MINOR_VERSION 		13
-#define DENV_FIX_VERSION 		8
+#define DENV_FIX_VERSION 		10
 
 #define DENV_MAGIC 				0x44454e5600000000ULL
 
@@ -387,6 +388,24 @@ bool denv_element_on_update(Table *table, Element *element) {
 	return false;
 }
 
+bool denv_await_element(Table *table, char *name, time_t nsec){
+	Element *e = denv_table_get_element(table, name);
+	
+	struct timespec ts = {};
+	ts.tv_sec = 0;
+	ts.tv_nsec = nsec;
+
+	while (e == NULL) {
+		nanosleep(&ts, NULL);
+		e = denv_table_get_element(table, name);
+	}
+	
+	while (denv_element_on_update(table, e) == false){
+		nanosleep(&ts, NULL);
+	}
+
+}
+
 void denv_table_delete_value(Table *table, char *name){
 	assert(table != NULL && name != NULL);
 	Word hash = denv_hash(name);
@@ -493,7 +512,7 @@ void denv_print_version(void){
 	printf("denv %d.%d.%d.%d\n", version.a, version.b, version.c, version.d);
 }
 
-void denv_print_stats(Table *table){
+void denv_print_stats_csv(Table *table){
 	Word used = table->element.used;
 	Word col_used = table->element.colision_used;
 	Word total = used + col_used;

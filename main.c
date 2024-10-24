@@ -10,7 +10,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <time.h>
 
 #define DENV_BIND_PATH				("/.local/share/denv")
 #define ARRLEN(X) 					(sizeof(X)/sizeof((X)[0]))
@@ -35,6 +34,13 @@ typedef enum {
 	LOAD,
 	AWAIT
 }commands_states;
+
+typedef enum {
+	CSV = 1,
+	XML,
+	JSON,
+	PRETTY // will be the default when implemented
+}print_options;
 
 static const struct {
 	char*	cmd;
@@ -69,7 +75,7 @@ void print_help(void) {
 		"\trm [-b] <key>                  Removes the key and value pair.\n"
 		"\tls [-b]                        Lists all keys.\n"
 		"\tdrop [-f/-b]                   Deletes everything in the attached shmem.\n"
-		"\tstats [-b]                     Print stats.\n"
+		"\tstats [-b] / --<format>        Print stats.\n"
 		"\tcleanup [-b]                   Clear deleted variables from memory.\n"
 		"\tsave [-b] <filename>           Save denv table to a file.\n"
 		"\tload [-f/-b] <filename>        Load from a denv save file.\n"
@@ -78,6 +84,9 @@ void print_help(void) {
 		"option -b:        Shared memory bind path.\n"
 		"option -e:        Set variable as an envrionment variable.\n"
 		"option -f:        Force yes to operations that prompts the user.\n"
+		"\n"
+		"stats --<format>:\n"
+		"\t--csv (default)\n"
 	);
 }
 
@@ -561,16 +570,24 @@ int main(int argc, char* argv[]){
 		} break;
 
 		case STATS: {
-			// -b
-			// denv stats					2
-			// denv stats -b bind/path		4
+			// arg
+			// 0 	1 	  2 		3			4 		total
+			// denv stats									2
+			// denv stats --csv								3
+			//			  --json		
+			//			  --xml
+			//			  --pretty (default)
+			//
+			// denv stats -b 		bind/path 				4
+			// denv stats -b 		--csv 		bind/path 	5
+			// denv stats --csv 	-b 			bind/path 	5
 
 			if(argc == 2) {
 
 				table = init();
 				if(table == NULL) goto error;
 	
-				denv_print_stats(table);
+				denv_print_stats_csv(table); //denv_print_stats_pretty
 			} else if (argc == 4) {
 
 				if(strcmp(argv[2], "-b") != 0) {
@@ -581,12 +598,91 @@ int main(int argc, char* argv[]){
 				table = init_on_path(argv[3]);
 				if(table == NULL) goto error;
 
-				denv_print_stats(table);
+				denv_print_stats_csv(table); //denv_print_stats_pretty
 				
 			} else if (argc == 3) {
-				fprintf(stderr, "Missing path or too many arguments.\n");
-				goto error;
-			} else if (argc > 4) {
+
+				int opt = UNDEFINED;
+				if(strcmp(argv[2], "--csv") == 0)	 opt = CSV;
+				if(strcmp(argv[2], "--xml") == 0) 	 opt = XML;
+				if(strcmp(argv[2], "--json") == 0) 	 opt = JSON;
+				if(strcmp(argv[2], "--pretty") == 0) opt = PRETTY;
+				if(opt == UNDEFINED) {
+					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
+					goto error;
+				}
+
+				table = init();
+				if(table == NULL) goto error;
+
+				switch(opt) {
+					case CSV:
+						denv_print_stats_csv(table);
+						break;
+						
+					case XML:
+						fprintf(stderr, "Feature not implemented.\n");
+						goto error;
+						break;
+						
+					case JSON:
+						fprintf(stderr, "Feature not implemented.\n");
+						goto error;						
+						break;
+						
+					case PRETTY:
+						fprintf(stderr, "Feature not implemented.\n");
+						goto error;						
+						break;
+				}
+
+			} else if (argc == 5) {
+				int opt = UNDEFINED;
+				char *arg = argv[2];
+				if(strcmp(argv[2], "-b") == 0) {
+					arg = argv[3];
+				} else {
+					if(strcmp(argv[3], "-b") != 0) {
+						fprintf(stderr, "Unknown option \"%s\".\n", argv[3]);
+						goto error;
+					}
+				}
+
+				if(strcmp(arg, "--csv") == 0)	 opt = CSV;
+				if(strcmp(arg, "--xml") == 0) 	 opt = XML;
+				if(strcmp(arg, "--json") == 0) 	 opt = JSON;
+				if(strcmp(arg, "--pretty") == 0) opt = PRETTY;
+
+				table = init_on_path(argv[4]);
+				if(table == NULL) goto error;
+
+				switch(opt) {
+					case UNDEFINED:
+						fprintf(stderr, "Unknown option \"%s\".\n", arg);
+						goto error;
+						break;
+				
+					case CSV:
+						denv_print_stats_csv(table);
+						break;
+						
+					case XML:
+						fprintf(stderr, "Feature not implemented.\n");
+						goto error;	
+						break;
+						
+					case JSON:
+						fprintf(stderr, "Feature not implemented.\n");
+						goto error;	
+						break;
+						
+					case PRETTY:
+						fprintf(stderr, "Feature not implemented.\n");
+						goto error;	
+						break;
+				}
+				
+			} else if (argc > 5) {
 				fprintf(stderr, "Too many arguments.\n");
 				goto error;
 			}
@@ -752,20 +848,7 @@ int main(int argc, char* argv[]){
 					goto error;
 				}
 			
-				Element *e = denv_table_get_element(table, argv[2]);
-
-				struct timespec ts = {};
-				ts.tv_sec = 0;
-				ts.tv_nsec = POLLING_INTERVAL;
-
-				while (e == NULL) {
-					nanosleep(&ts, NULL);
-					e = denv_table_get_element(table, argv[2]);
-				}
-
-				while (denv_element_on_update(table, e) == false){
-					nanosleep(&ts, NULL);
-				}
+				denv_await_element(table, argv[2], POLLING_INTERVAL);
 				
 			} else if (argc == 5) {
 
@@ -780,20 +863,7 @@ int main(int argc, char* argv[]){
 					goto error;
 				}
 
-				Element *e = denv_table_get_element(table, argv[4]);
-				
-				struct timespec ts = {};
-				ts.tv_sec = 0;
-				ts.tv_nsec = POLLING_INTERVAL;
-
-				while (e == NULL) {
-					nanosleep(&ts, NULL);
-					e = denv_table_get_element(table, argv[4]);
-				}
-				
-				while (denv_element_on_update(table, e) == false){
-					nanosleep(&ts, NULL);
-				}
+				denv_await_element(table, argv[4], POLLING_INTERVAL);
 						
 			} else if (argc == 4) {
 				fprintf(stderr, "Missing path or too many arguments.\n");

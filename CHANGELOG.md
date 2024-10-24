@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- Version Index -->
+* [0.13.10](#01310)
 * [0.13.8](#0138)
 * [0.13.7](#0137)
 * [0.13.6](#0136)
@@ -20,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [0.9.2](#092)
 
 <!-- Changelog Description -->
+## 0.13.10
+
+### Changed 
+* `stats` command now has room for more formats.
+* `await` function was moved to `denv.h`.
+
 ## 0.13.8
 
 ### Changed
@@ -67,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Removing table no longer loads the table (useful for removing broken tables).
 
-## .10.6
+## 0.10.6
 
 ### Added
 * Flag to force yes to operations that prompts the user.
