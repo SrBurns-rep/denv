@@ -761,6 +761,8 @@ Table *denv_load_from_file(Table *table, char *pathname){
 
 int denv_exec(Table *table, char *program_path, char **argv) {
 
+	sem_wait(&table->denv_sem);
+
 	for(int i = 0; i < DENV_MAX_ELEMENTS; i++) {
 		Element *e = &table->element.array[i];
 		Element *coll_e = &table->element.collision_array[i];
@@ -790,6 +792,8 @@ int denv_exec(Table *table, char *program_path, char **argv) {
 		}
 	}
 
+	sem_post(&table->denv_sem);
+	
 	if(execvp(program_path, argv) == -1) {
 		perror("execvp");
 		return -1;
