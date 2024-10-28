@@ -32,7 +32,8 @@ typedef enum {
 	CLEANUP,
 	SAVE,
 	LOAD,
-	AWAIT
+	AWAIT,
+	EXEC
 }commands_states;
 
 typedef enum {
@@ -62,7 +63,8 @@ static const struct {
 	{"cleanup",		"b:",	CLEANUP},
 	{"save",		"b:",  	SAVE},
 	{"load",		"fb:",	LOAD},
-	{"await",		"b:",	AWAIT}
+	{"await",		"b:",	AWAIT},
+	{"exec",		"b:",	EXEC}
 };
 
 void print_help(void) {
@@ -80,6 +82,7 @@ void print_help(void) {
 		"\tsave [-b] <filename>           Save denv table to a file.\n"
 		"\tload [-f/-b] <filename>        Load from a denv save file.\n"
 		"\tawait [-b] <key>               Wait for a change in key value.\n"
+		"\texec [-b] <program> <args>     Executes a program with denv environment variables.\n"
 		"\n"
 		"option -b:        Shared memory bind path.\n"
 		"option -e:        Set variable as an envrionment variable.\n"
@@ -744,7 +747,7 @@ int main(int argc, char* argv[]){
 					goto error;
 				}
 
-				table = init_on_path(argv[4]);
+				table = init_on_path(argv[3]);
 				if(table == NULL) goto error;
 
 				err = denv_save_to_file(table, argv[4]);
@@ -874,6 +877,42 @@ int main(int argc, char* argv[]){
 			} else if (argc > 5) {
 				fprintf(stderr, "Too many arguments.\n");
 				goto error;
+			}
+			
+		} break;
+
+		case EXEC: {
+			//			 arg0 (&argv[2])
+			// denv exec printenv arg1 arg2 arg3 arg4 ...
+			//						  arg0 (&argv[4])
+			// denv exec -b bind/path printenv arg1 arg2 arg3 arg4 ...
+			if(argc == 2) {
+				printf("Not enough arguments!\n");
+				goto error;
+			}
+			if((strcmp(argv[2],"-b")) == 0) {
+
+				if(argc == 3) {
+					fprintf(stderr, "Missing bind path.\n");
+					goto error;
+				}
+				if(argc == 4) {
+					fprintf(stderr, "Missing program.\n");
+					goto error;
+				}
+			
+				table = init_only_table(argv[3]);
+				if(table == NULL) goto error;
+
+				if(denv_exec(table, argv[4], &argv[4]) == -1) goto error;
+				
+			} else {
+				file_name = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
+
+				table = init_only_table(file_name);
+				if(table == NULL) goto error;
+
+				if(denv_exec(table, argv[2], &argv[2]) == -1) goto error;
 			}
 			
 		} break;

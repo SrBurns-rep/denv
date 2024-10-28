@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- Version Index -->
+* [0.14.0](#0140)
 * [0.13.10](#01310)
 * [0.13.8](#0138)
 * [0.13.7](#0137)
@@ -21,6 +22,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [0.9.2](#092)
 
 <!-- Changelog Description -->
+## 0.14.0
+
+### Added
+* `exec` command to execute programs with denv environment variables.
+
+### Changed
+* Removed `spawn shell` from the todo-list, exec should work with shells too. 
+
+### Fixed
+* Bug with `NULL` values in the `clear_freed` function.
+* Bug with the save command with wrong argument to load the table.
+* Typo in the soure code.
+
 ## 0.13.10
 
 ### Changed 

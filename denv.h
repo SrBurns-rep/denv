@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <zlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #define DENV_IPC_RESULT_ERROR 	(-1)
 
@@ -24,8 +25,8 @@
 #define DENV_BLOCK_SIZE 		(1 << 20) // 1048576 Bytes
 
 #define DENV_MAJOR_VERSION 		0
-#define DENV_MINOR_VERSION 		13
-#define DENV_FIX_VERSION 		10
+#define DENV_MINOR_VERSION 		14
+#define DENV_FIX_VERSION 		0
 
 #define DENV_MAGIC 				0x44454e5600000000ULL
 
@@ -37,7 +38,7 @@ typedef uintptr_t Word;
 
 typedef enum {
 	ELEMENT_IS_USED			= (1 << 0),
-	ELEMENT_HAS_COLISION	= (1 << 1),
+	ELEMENT_HAS_COLLISION	= (1 << 1),
 	ELEMENT_IS_FREED		= (1 << 2),
 	ELEMENT_IS_ENV			= (1 << 3),
 	ELEMENT_IS_BEING_READ	= (1 << 4),
@@ -48,7 +49,7 @@ typedef struct {
 	Word flags;
 	Word data_index;	 // block index
 	Word data_word_size; // size in words
-	Word colision_next;	 // get colision member
+	Word collision_next;	 // get collision member
 }Element;
 
 typedef enum {
@@ -62,9 +63,9 @@ typedef struct {
 	sem_t denv_sem;
 	struct {
 		Word used;
-		Word colision_used;
+		Word collision_used;
 		Element array[DENV_MAX_ELEMENTS];
-		Element colision_array[DENV_MAX_ELEMENTS];
+		Element collision_array[DENV_MAX_ELEMENTS];
 	}element;
 	Word total_size;
 	Word current_word_block_offset;
@@ -112,7 +113,7 @@ Table *denv_table_init(void *init_ptr){
 	table->magic = DENV_MAGIC;
 
 	table->element.used = 0;
-	table->element.colision_used = 0;
+	table->element.collision_used = 0;
 
 	table->total_size = sizeof(Table);
 
@@ -149,7 +150,7 @@ char *denv_get_element_name(Table *table, Word element_index){
 	char *name;
 
 	if(element_index >= DENV_MAX_ELEMENTS){
-		name = (char*) &table->block[table->element.colision_array[element_index].data_index];
+		name = (char*) &table->block[table->element.collision_array[element_index].data_index];
 	} else {
 		name = (char*) &table->block[table->element.array[element_index].data_index];
 	}
@@ -171,7 +172,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 	Word storage_size_in_words = denv_round_to_word(storage_size);
 
 	// Do not let external flags mess up with crucial flags
-	flags &= ~(ELEMENT_IS_USED | ELEMENT_IS_BEING_READ | ELEMENT_HAS_COLISION | ELEMENT_IS_FREED | ELEMENT_IS_UPDATED);
+	flags &= ~(ELEMENT_IS_USED | ELEMENT_IS_BEING_READ | ELEMENT_HAS_COLLISION | ELEMENT_IS_FREED | ELEMENT_IS_UPDATED);
 
 	if(e->flags & ELEMENT_IS_USED) {
 
@@ -197,22 +198,22 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 			}
 
 		} else {
-			if(e->flags & ELEMENT_HAS_COLISION) {
-				//check all palces with ->colision_next
-				Element *col_e = &table->element.colision_array[e->colision_next & (DENV_MAX_ELEMENTS - 1)];
+			if(e->flags & ELEMENT_HAS_COLLISION) {
+				//check all palces with ->collision_next
+				Element *col_e = &table->element.collision_array[e->collision_next & (DENV_MAX_ELEMENTS - 1)];
 				char *col_element_name = (char *) &table->block[col_e->data_index];
 
 				// loop here
 				while(strcmp(name, col_element_name)){ 
-					if(col_e->flags & ELEMENT_HAS_COLISION){
-						col_e = &table->element.colision_array[col_e->colision_next];
+					if(col_e->flags & ELEMENT_HAS_COLLISION){
+						col_e = &table->element.collision_array[col_e->collision_next];
 						col_element_name = (char *) &table->block[col_e->data_index];
 					} else {
-						// element has colision now
-						col_e->flags |= ELEMENT_HAS_COLISION;
-						col_e->colision_next = table->element.colision_used;
-						col_e = &table->element.colision_array[table->element.colision_used];
-						table->element.colision_used++;
+						// element has collision now
+						col_e->flags |= ELEMENT_HAS_COLLISION;
+						col_e->collision_next = table->element.collision_used;
+						col_e = &table->element.collision_array[table->element.collision_used];
+						table->element.collision_used++;
 
 						col_e->flags |= ELEMENT_IS_USED;
 						col_e->data_word_size = storage_size_in_words / sizeof(Word);
@@ -245,14 +246,14 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 				}
 	
 			} else {
-				// element has colision now
-				e->flags |= ELEMENT_HAS_COLISION;
-				e->colision_next = table->element.colision_used;
-				Element *col_e = &table->element.colision_array[table->element.colision_used];
+				// element has collision now
+				e->flags |= ELEMENT_HAS_COLLISION;
+				e->collision_next = table->element.collision_used;
+				Element *col_e = &table->element.collision_array[table->element.collision_used];
 
-				assert(table->element.colision_used < DENV_MAX_ELEMENTS);
+				assert(table->element.collision_used < DENV_MAX_ELEMENTS);
 				
-				table->element.colision_used++;
+				table->element.collision_used++;
 				
 				col_e->flags |= ELEMENT_IS_USED;
 				col_e->data_word_size = storage_size_in_words / sizeof(Word);
@@ -301,13 +302,13 @@ char *denv_table_get_value(Table *table, char* name){
 			char *data = (char*) &table->block[e->data_index];
 			value = data + strlen(data) + 1;
 		} else {
-			if(e->flags & ELEMENT_HAS_COLISION){
-				Element *col_e = &table->element.colision_array[e->colision_next];
+			if(e->flags & ELEMENT_HAS_COLLISION){
+				Element *col_e = &table->element.collision_array[e->collision_next];
 				char *col_element_name = (char *) &table->block[col_e->data_index];
 
 				while(strcmp(name, col_element_name)){
-					if(col_e->flags & ELEMENT_HAS_COLISION){
-						col_e = &table->element.colision_array[col_e->colision_next];
+					if(col_e->flags & ELEMENT_HAS_COLLISION){
+						col_e = &table->element.collision_array[col_e->collision_next];
 						col_element_name = (char *) &table->block[col_e->data_index];
 					} else {
 						//debug if
@@ -347,13 +348,13 @@ Element *denv_table_get_element(Table *table, char *name){
 			return e;
 			
 		} else {
-			if(e->flags & ELEMENT_HAS_COLISION){
-				Element *col_e = &table->element.colision_array[e->colision_next];
+			if(e->flags & ELEMENT_HAS_COLLISION){
+				Element *col_e = &table->element.collision_array[e->collision_next];
 				char *col_element_name = (char *) &table->block[col_e->data_index];
 
 				while(strcmp(name, col_element_name)){
-					if(col_e->flags & ELEMENT_HAS_COLISION){
-						col_e = &table->element.colision_array[col_e->colision_next];
+					if(col_e->flags & ELEMENT_HAS_COLLISION){
+						col_e = &table->element.collision_array[col_e->collision_next];
 						col_element_name = (char *) &table->block[col_e->data_index];
 					} else {
 						//debug if
@@ -419,13 +420,13 @@ void denv_table_delete_value(Table *table, char *name){
 		table->element.used--;
 		
 	} else {
-		if(e->flags & ELEMENT_HAS_COLISION){
-			Element *col_e = &table->element.colision_array[e->colision_next & (DENV_MAX_ELEMENTS - 1)];
+		if(e->flags & ELEMENT_HAS_COLLISION){
+			Element *col_e = &table->element.collision_array[e->collision_next & (DENV_MAX_ELEMENTS - 1)];
 			char *col_element_name = (char *) &table->block[col_e->data_index];
 
 			while(strcmp(name, col_element_name)){
-				if(col_e->flags & ELEMENT_HAS_COLISION){
-					col_e = &table->element.colision_array[col_e->colision_next];
+				if(col_e->flags & ELEMENT_HAS_COLLISION){
+					col_e = &table->element.collision_array[col_e->collision_next];
 					col_element_name = (char *) &table->block[col_e->data_index];
 				} else {
 					break; //return;
@@ -445,10 +446,10 @@ void denv_table_list_values(Table *table) {
 			printf("%s\n", (char *) &table->block[table->element.array[i].data_index]);
 		}
 		
-		Word col_flags = table->element.colision_array[i].flags;
+		Word col_flags = table->element.collision_array[i].flags;
 		
 		if((col_flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED)) == ELEMENT_IS_USED) {
-			printf("%s\n", (char *) &table->block[table->element.colision_array[i].data_index]);
+			printf("%s\n", (char *) &table->block[table->element.collision_array[i].data_index]);
 		}
 	}
 }
@@ -514,7 +515,7 @@ void denv_print_version(void){
 
 void denv_print_stats_csv(Table *table){
 	Word used = table->element.used;
-	Word col_used = table->element.colision_used;
+	Word col_used = table->element.collision_used;
 	Word total = used + col_used;
 
 	printf(
@@ -535,36 +536,37 @@ int denv_clear_freed(Table *table){
 		return -1;
 	}
 
+	// Initialize the clean table with the source table attributes
+	clean_table->magic = table->magic;
 	clean_table->flags = table->flags;
 	clean_table->denv_sem = table->denv_sem;
 	clean_table->element.used = 0;
-	clean_table->element.colision_used = 0;
+	clean_table->element.collision_used = 0;
 	clean_table->total_size = table->total_size;
 	clean_table->current_word_block_offset = 0;
 
-	// this section has room for optimizations
 	for(int i = 0; i < DENV_MAX_ELEMENTS; i++){
 		
 		Element *e = &table->element.array[i];
-		Element *coll_e = &table->element.colision_array[i];
+		Element *coll_e = &table->element.collision_array[i];
 		
 		if((e->flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED)) == ELEMENT_IS_USED){
 			char *name = (char*)&table->block[e->data_index];
 			char *value = denv_table_get_value(table, name);
-			if(!value) break;
-			denv_table_set_value(clean_table, name, value, 0);
+			if(value != NULL) {
+				denv_table_set_value(clean_table, name, value, e->flags);
+			}
 		}
 		if((coll_e->flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED)) == ELEMENT_IS_USED){
 			char *name = (char*)&table->block[coll_e->data_index];
 			char *value = denv_table_get_value(table, name);
-			if(!value) break;
-			denv_table_set_value(clean_table, name, value, 0);
+			if(value != NULL) {
+				denv_table_set_value(clean_table, name, value, coll_e->flags);
+			}
 		}
 	}
 
-	size_t table_size = table->total_size;
-
-	memcpy(table, clean_table, table_size);
+	memcpy(table, clean_table, table->total_size);
 
 	free(clean_table);
 	
@@ -757,16 +759,42 @@ Table *denv_load_from_file(Table *table, char *pathname){
 	return table;
 }
 
-/* TODO:
-int denv_expand_table(Table *table){
-	
+int denv_exec(Table *table, char *program_path, char **argv) {
+
+	for(int i = 0; i < DENV_MAX_ELEMENTS; i++) {
+		Element *e = &table->element.array[i];
+		Element *coll_e = &table->element.collision_array[i];
+		
+		if((e->flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED | ELEMENT_IS_ENV)) == (ELEMENT_IS_USED | ELEMENT_IS_ENV)) {
+			char *name = (char*)&table->block[e->data_index];
+			char *value = denv_table_get_value(table, name);
+			
+			if(name[0] && value) {
+				if(setenv(name, value, 1) != 0) {
+					perror("setenv");
+					return -1;
+				}
+			}
+		}
+
+		if((coll_e->flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED | ELEMENT_IS_ENV)) == (ELEMENT_IS_USED | ELEMENT_IS_ENV)) {
+			char *name = (char*)&table->block[coll_e->data_index];
+			char *value = denv_table_get_value(table, name);
+			
+			if(name[0] && value) {
+				if(setenv(name, value, 1) != 0) {
+					perror("setenv");
+					return -1;
+				}
+			}
+		}
+	}
+
+	if(execvp(program_path, argv) == -1) {
+		perror("execvp");
+		return -1;
+	}
+	return 0;
 }
-
-
-int denv_load_config_file(char *filename){
-	
-
-}
-*/
 
 #endif /* _DENV_H */
