@@ -33,7 +33,9 @@ typedef enum {
 	SAVE,
 	LOAD,
 	AWAIT,
-	EXEC
+	EXEC,
+	CLONE,
+	EXPORT
 }commands_states;
 
 typedef enum {
@@ -64,7 +66,9 @@ static const struct {
 	{"save",		"b:",  	SAVE},
 	{"load",		"fb:",	LOAD},
 	{"await",		"b:",	AWAIT},
-	{"exec",		"b:",	EXEC}
+	{"exec",		"b:",	EXEC},
+	{"clone",		"b:",	CLONE},
+	{"export",		"b:",	EXPORT}
 };
 
 void print_help(void) {
@@ -83,6 +87,8 @@ void print_help(void) {
 		"\tload [-f/-b] <filename>        Load from a denv save file.\n"
 		"\tawait [-b] <key>               Wait for a change in key value.\n"
 		"\texec [-b] <program> <args>     Executes a program with denv environment variables.\n"
+		"\tclone [-b]                     Clone parent process environment.\n"
+		"\texport [-b]                    Export environment variables to a file.\n"
 		"\n"
 		"option -b:        Shared memory bind path.\n"
 		"option -e:        Set variable as an envrionment variable.\n"
@@ -247,7 +253,7 @@ Table *init_only_table(char *file_name) {
 	return table;	
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char **argv, char **envp){
 
 	if(argc < 2){
 		fprintf(stderr, "Not enough arguments.\n");
@@ -915,6 +921,92 @@ int main(int argc, char* argv[]){
 				if(denv_exec(table, argv[2], &argv[2]) == -1) goto error;
 			}
 			
+		} break;
+
+		case CLONE: {
+			// denv clone
+			// denv clone -b bind/path
+			if(argc == 2) {
+				table = init();
+				denv_clone_env(table, envp);
+			} else if (argc == 4) {
+				if(strcmp(argv[2], "-b") != 0) {
+					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
+					goto error;
+				}
+
+				table = init_on_path(argv[3]);
+				if(table == NULL) goto error;
+
+				denv_clone_env(table, envp);
+				
+			} else if (argc == 3) {
+				fprintf(stderr, "Missing path or too many arguments.\n");
+				goto error;
+			} else if (argc > 4) {
+				fprintf(stderr, "Too many arguments!\n");
+				goto error;
+			}
+		} break;
+
+		case EXPORT: {
+			// denv export -						3
+			// denv export filepath					3
+			// denv export -b bind/path -			5
+			// denv export -b bind/path filepath	5
+
+			FILE *save_env = NULL;
+	
+			if (argc == 2) {
+				fprintf(stderr, "Missing file path or \"-\".\n");
+				goto error;
+			} else if (argc == 3) {
+				if(argv[2][0] == '-') {
+					save_env = stdout;
+				} else {
+					save_env = fopen(argv[2], "w+");
+					if (save_env == NULL) {
+						perror("fopen");
+						goto error;
+					}
+				}
+
+				table = init();
+
+				denv_make_env_save_file(table, save_env);
+				
+			} else if (argc == 4) {
+				fprintf(stderr, "Missing path or too many arguments.\n");
+				goto error;				
+			} else if (argc == 5) {
+				if (strcmp(argv[2], "-b") != 0) {
+					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
+					goto error;
+				}
+
+				table = init_on_path(argv[3]);
+				if(table == NULL) goto error;
+
+				if(argv[4][0] == '-') {
+					save_env = stdout;
+				} else {
+					save_env = fopen(argv[4], "w+");
+					if (save_env == NULL) {
+						perror("fopen");
+						goto error;
+					}
+				}
+
+				denv_make_env_save_file(table, save_env);
+				
+			} else if (argc > 5) {
+				fprintf(stderr, "Too many arguments!\n");
+				goto error;				
+			}
+
+			if (save_env) {
+				fclose(save_env);
+			}
 		} break;
 		
 	}

@@ -10,13 +10,13 @@
 - [x] Option to load denv in another path.
 - [x] Option to watch variable and block until it's changed.
 - [x] Function to execute a program with denv environment variables.
-- [ ] Function to load environment variables to it.
-- [ ] Function to make an file to source environment variables.
+- [x] Make a man page.
+- [x] Function to clone environment variables.
+- [x] Function to make an file to source environment variables.
 - [ ] Read lock for each variable, single write lock for the entire thing.
 - [ ] Create automated tests.
 - [ ] Benchmark.
 - [ ] Fix bugs.
-- [ ] Make a man page.
 - [ ] Implement a cofiguration file in toml.
 - [ ] Fix more bugs and prepare for packaging.
 - [ ] Make a package for .deb, .rpm, archlinux and freebsd.

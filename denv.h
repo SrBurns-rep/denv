@@ -25,12 +25,14 @@
 #define DENV_BLOCK_SIZE 		(1 << 20) // 1048576 Bytes
 
 #define DENV_MAJOR_VERSION 		0
-#define DENV_MINOR_VERSION 		14
+#define DENV_MINOR_VERSION 		15
 #define DENV_FIX_VERSION 		0
 
 #define DENV_MAGIC 				0x44454e5600000000ULL
 
 #define DENV_CHUNK 				(1 << 19) //512KiB
+
+#define DENV_ENV_BUFFER			(1 << 11) // 2048 Bytes
 
 #define DENV_COMPRESSION_LEVEL 	Z_DEFAULT_COMPRESSION
 
@@ -157,12 +159,17 @@ char *denv_get_element_name(Table *table, Word element_index){
 	return name;
 }
 
-
+/*
+Functions to implement to simplify denv_table_set_value
+denv_write_element_data
+denv_realloc_element_data
+denv_handle_collisions
+denv_element_has_collision
+*/
 /* Function that receives table, variable name and value and allocates the element,
    it also edits the element if the name match
    it also do collision handling
 */
-
 void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 	assert(table != NULL && name != NULL);
 	Word hash = denv_hash(name);
@@ -799,6 +806,77 @@ int denv_exec(Table *table, char *program_path, char **argv) {
 		return -1;
 	}
 	return 0;
+}
+
+int denv_clone_env(Table *table, char **envp) {
+	assert(envp && envp[0]);
+	// calculate env size
+	size_t env_size = 0;
+	size_t env_lines = 0;
+
+	Word used = table->element.used;
+	Word col_used = table->element.collision_used;
+
+	for(int i = 0; envp[i]; i++) {
+		env_size += strlen(envp[i]);
+		env_lines++;
+	}
+
+	if (env_lines > ((2 * DENV_MAX_ELEMENTS) - (used + col_used))) {
+		fprintf(stderr, "Not enough space to store environment variables.\n");
+		return -1;
+	}
+
+	if (env_size > ((DENV_BLOCK_SIZE - table->current_word_block_offset) * (sizeof(Word)))) {
+		fprintf(stderr, "Not enough space to store environment variables.\n");
+		return -1;
+	}
+
+	char *name = NULL;
+	char *value = NULL;
+
+	for(int i = 0; envp[i]; i++) {
+		name = &envp[i][0];
+		for(size_t j = 0; j <= strlen(envp[i]); j++) {
+			if(envp[i][j] == '=') {
+				envp[i][j] = '\0';
+				if(envp[i][j + 1]) {
+					value = &envp[i][j + 1];
+					denv_table_set_value(table, name, value, ELEMENT_IS_ENV);
+				}
+				break;
+			}
+		}
+	}
+	return 0;
+}
+// Function to make a text file for using with the "source" bash command
+void denv_make_env_save_file(Table *table, FILE *file) {
+
+	assert((table != NULL) && (file != NULL));
+
+	for(int i = 0; i < DENV_MAX_ELEMENTS; i++) {
+		Element *e = &table->element.array[i];
+		Element *coll_e = &table->element.collision_array[i];
+		
+		if((e->flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED | ELEMENT_IS_ENV)) == (ELEMENT_IS_USED | ELEMENT_IS_ENV)) {
+			char *name = (char*)&table->block[e->data_index];
+			char *value = denv_table_get_value(table, name);
+			
+			if(name[0] && value) {
+				fprintf(file, "export %s=%s\n", name, value);
+			}
+		}
+
+		if((coll_e->flags & (ELEMENT_IS_USED | ELEMENT_IS_FREED | ELEMENT_IS_ENV)) == (ELEMENT_IS_USED | ELEMENT_IS_ENV)) {
+			char *name = (char*)&table->block[coll_e->data_index];
+			char *value = denv_table_get_value(table, name);
+			
+			if(name[0] && value) {
+				fprintf(file, "export %s=%s\n", name, value);
+			}
+		}
+	}
 }
 
 #endif /* _DENV_H */

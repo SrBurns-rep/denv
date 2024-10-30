@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- Version Index -->
+* [0.15.0](#0150)
 * [0.14.0](#0140)
 * [0.13.10](#01310)
 * [0.13.8](#0138)
@@ -22,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [0.9.2](#092)
 
 <!-- Changelog Description -->
+## 0.15.0
+
+### Added
+* `export` command to export env variables stored in denv to a file.
+
 ## 0.14.0
 
 ### Added
