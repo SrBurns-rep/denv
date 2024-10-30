@@ -16,12 +16,13 @@
 - [ ] Read lock for each variable, single write lock for the entire thing.
 - [ ] Create automated tests.
 - [ ] Benchmark.
+- [ ] Tidy up for release.
 - [ ] Fix bugs.
-- [ ] Implement a cofiguration file in toml.
-- [ ] Fix more bugs and prepare for packaging.
+- [ ] Prepare for packaging.
 - [ ] Make a package for .deb, .rpm, archlinux and freebsd.
 
 ## To-do for V2.0
+- [ ] Implement a cofiguration file in toml.
 - [ ] Redesign denv to be expandable.
 - [ ] Function to expand the memory table.
 - [ ] Add support for locales.
