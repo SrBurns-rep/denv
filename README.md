@@ -1,6 +1,6 @@
 <img align="left" style="width:260px" src="resources/denv-logo.svg" width="260px">
 
-**Denv - A Shared Memory Environment for general usage..** 
+**Denv - A Shared Memory Environment for general usage.** 
 
 Denv creates a shared memory instance for storing variables for general usage. It enables an easy way to communicate between shell processes. This shared memory instance is globally shared among any call to denv, and denv blocks its call until the command is complete.
 
