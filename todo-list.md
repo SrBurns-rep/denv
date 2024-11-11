@@ -13,6 +13,7 @@
 - [x] Make a man page.
 - [x] Function to clone environment variables.
 - [x] Function to make an file to source environment variables.
+- [ ] Add a daemon.
 - [ ] Tidy up for release.
 - [ ] Make a package for .deb, .rpm, archlinux and freebsd.
 
@@ -27,5 +28,4 @@
 - [ ] Redesign denv to be expandable.
 - [ ] Function to expand the memory table.
 - [ ] Add support for locales.
-- [ ] Add a daemon.
 - [ ] Maybe add cryptography and access management.

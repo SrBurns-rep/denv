@@ -27,7 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 1.0.0
 
 ### Added
-* `ls` now will indicate environment variables by default.
+* `daemon` command will wait until SIGTERM to save denv state.
+* `ls` will now indicate environment variables by default.
 
 ### Changed
 * Moved semaphores to the set, get and delete functions.

@@ -9,15 +9,18 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <signal.h>
 #include <ctype.h>
+#include <syslog.h>
 
-#define DENV_BIND_PATH				("/.local/share/denv")
-#define ARRLEN(X) 					(sizeof(X)/sizeof((X)[0]))
-#define BUFF_SIZE 					(1024)
-#define STDIN_VAR_BUFFER_LENGTH		(4096)
-#define PATH_BUFFER_LENGHT			(4096)
-#define POLLING_MILLISECONDS		(1000000)
-#define POLLING_INTERVAL			(100 * POLLING_MILLISECONDS)
+#define DENV_BIND_PATH                  ("/.local/share/denv")
+#define DENV_SAVE_PATH                  ("/save.denv")
+#define ARRLEN(X)                       (sizeof(X)/sizeof((X)[0]))
+#define BUFF_SIZE                       (1024)
+#define STDIN_VAR_BUFFER_LENGTH         (4096)
+#define PATH_BUFFER_LENGHT              (4096)
+#define POLLING_MILLISECONDS            (1000000)
+#define POLLING_INTERVAL                (100 * POLLING_MILLISECONDS)
 
 typedef enum {
 	UNDEFINED,
@@ -35,7 +38,8 @@ typedef enum {
 	AWAIT,
 	EXEC,
 	CLONE,
-	EXPORT
+	EXPORT,
+	DAEMON,
 }commands_states;
 
 typedef enum {
@@ -68,7 +72,8 @@ static const struct {
 	{"await",		"b:",	AWAIT},
 	{"exec",		"b:",	EXEC},
 	{"clone",		"b:",	CLONE},
-	{"export",		"b:",	EXPORT}
+	{"export",		"b:",	EXPORT},
+	{"daemon",              "b:",   DAEMON},
 };
 
 void print_help(void) {
@@ -89,6 +94,7 @@ void print_help(void) {
 		"\texec [-b] <program> <args>     Executes a program with denv environment variables.\n"
 		"\tclone [-b]                     Clone parent process environment.\n"
 		"\texport [-b]                    Export environment variables to a file.\n"
+		"\tdaemon [-b]                    Run a daemon to automatically save and load.\n"
 		"\n"
 		"option -b:        Shared memory bind path.\n"
 		"option -e:        Set variable as an envrionment variable.\n"
@@ -138,6 +144,11 @@ char *get_bind_path(char *path_buf, size_t buf_len){
 	make_bind_path(path_buf);
 
 	return path_buf;
+}
+
+bool check_path(const char *path) {
+	struct stat st = {0};
+	return (stat(path, &st) != -1);
 }
 
 bool check_bind_path(const char *path) {
@@ -859,6 +870,7 @@ int main(int argc, char **argv, char **envp){
 			// denv await variable
 			// denv await -b some/path variable
 			file_name = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
+			if(file_name == NULL) goto error;
 			
 			if(argc == 3) {
 
@@ -925,7 +937,8 @@ int main(int argc, char **argv, char **envp){
 				
 			} else {
 				file_name = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
-
+				if(file_name == NULL) goto error;
+				
 				table = init_only_table(file_name);
 				if(table == NULL) goto error;
 
@@ -1019,7 +1032,122 @@ int main(int argc, char **argv, char **envp){
 				fclose(save_env);
 			}
 		} break;
-		
+		  
+	    case DAEMON: {
+			// denv daemon        2
+			// denv daemon -b bind/path save-file 5
+
+			if(argc == 2) {
+				table = init();
+
+				if(table == NULL) goto error;
+
+				char *save_file_path = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
+				if(save_file_path == NULL) goto error;
+
+				save_file_path = strcat(save_file_path, DENV_SAVE_PATH);
+
+				if(check_path(save_file_path)) {
+					table = denv_load_from_file(table, save_file_path);
+					if(table == NULL) goto error;
+				}
+
+				// hang-up until SIGTERM
+				sigset_t set;
+				int sig;
+
+				sigemptyset(&set);
+				sigaddset(&set, SIGTERM);
+
+				sigprocmask(SIG_BLOCK, &set, NULL);
+
+				printf("Waiting until SIGTERM...\n");
+
+				openlog("DENV", LOG_PID | LOG_CONS, LOG_USER);
+
+				if(sigwait(&set, &sig) == 0) {
+					// Check if file exists, move to .old and then save new file
+					if(check_path(save_file_path)){
+						char new_path[PATH_BUFFER_LENGHT] = {0};
+						strcpy(new_path, save_file_path);
+						strcat(new_path, ".old");
+						int ren_err = rename(save_file_path, new_path);
+						if(ren_err == -1) {
+						  syslog(LOG_ERR, "Couldn't move current save to old save.");
+							goto error;
+						}
+					}
+					
+					int err = denv_save_to_file(table, save_file_path);
+					if(err) goto error;
+				} else {
+					syslog(LOG_ERR, "Daemon was interrupted abruptly, couldn't save it's state.");
+					goto error;
+				}
+
+				closelog();
+
+			} else if((argc == 3) || (argc == 4)) {
+			    fprintf(stderr, "Follow this pattern to use denv daemon with a binding path:\n"
+				    "\tdenv daemon -b binding/path save-file-name\n");
+			    goto error;
+			} else if(argc == 5) {
+
+			    if(strcmp(argv[2], "-b") != 0) {
+	 			fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
+				goto error;								
+			    }
+
+			    table = init_on_path(argv[3]);
+			    if(table == NULL) goto error;
+
+			    char *save_file_path = argv[4];
+
+			    if(check_path(save_file_path)){
+					table = denv_load_from_file(table, save_file_path);
+					if(table == NULL) goto error;			
+			    }
+
+				// hang-up until SIGTERM
+				sigset_t set;
+				int sig;
+
+				sigemptyset(&set);
+				sigaddset(&set, SIGTERM);
+
+				sigprocmask(SIG_BLOCK, &set, NULL);
+
+				printf("Waiting until SIGTERM...\n");
+
+				openlog("DENV", LOG_PID | LOG_CONS, LOG_USER);
+
+				if(sigwait(&set, &sig) == 0) {
+					// Check if file exists, move to .old and then save new file
+					if(check_path(save_file_path)){
+						char new_path[PATH_BUFFER_LENGHT] = {0};
+						strcpy(new_path, save_file_path);
+						strcat(new_path, ".old");
+						int ren_err = rename(save_file_path, new_path);
+						if(ren_err == -1) {
+						  syslog(LOG_ERR, "Couldn't move current save to old save.");
+							goto error;
+						}
+					}
+					
+					int err = denv_save_to_file(table, save_file_path);
+					if(err) goto error;
+				} else {
+					syslog(LOG_ERR, "Daemon was interrupted abruptly, couldn't save it's state for \"%s\".", save_file_path);
+					goto error;
+				}
+
+				closelog();				
+			    
+			} else {
+			    fprintf(stderr, "Too many arguments.\n");
+			    goto error;
+			}
+		}
 	}
 	
 	if(table){
