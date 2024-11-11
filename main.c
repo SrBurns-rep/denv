@@ -60,7 +60,7 @@ static const struct {
 	{"get",			"b:",	GET},
 	{"rm",			"b:",	REMOVE},	// *
 	{"drop",		"fb:",	DROP},		// *
-	{"ls",			"b:",	LIST},		// *
+	{"ls",			"xb:",	LIST},		// *
 	{"stats",		"b:",	STATS},
 	{"cleanup",		"b:",	CLEANUP},
 	{"save",		"b:",  	SAVE},
@@ -79,7 +79,7 @@ void print_help(void) {
 		"\tset [-b/-e] <key> <value>      Sets the key with the value provided.\n"
 		"\tget [-b] <key>                 Gets the value stored in the key.\n"
 		"\trm [-b] <key>                  Removes the key and value pair.\n"
-		"\tls [-b]                        Lists all keys.\n"
+		"\tls [-x/-b]                     Lists all keys.\n"
 		"\tdrop [-f/-b]                   Deletes everything in the attached shmem.\n"
 		"\tstats [-b] / --<format>        Print stats.\n"
 		"\tcleanup [-b]                   Clear deleted variables from memory.\n"
@@ -93,6 +93,7 @@ void print_help(void) {
 		"option -b:        Shared memory bind path.\n"
 		"option -e:        Set variable as an envrionment variable.\n"
 		"option -f:        Force yes to operations that prompts the user.\n"
+		"option -x:        Supress environment variable indicator on listing.\n"
 		"\n"
 		"stats --<format>:\n"
 		"\t--csv (default)\n"
@@ -197,15 +198,11 @@ Table  *init(){
 		denv_table_init(table);
 	}
 
-	sem_wait(&table->denv_sem);
-
 	return table;
 }
 
 void deinit(Table *table){
 	assert(table);
-
-	sem_post(&table->denv_sem);
 
 	if(denv_shmem_detach(table) == false){
 		fprintf(stderr, "Failed to detach shared memory.\n");
@@ -237,8 +234,6 @@ Table *init_on_path(char *path) {
 		}
 		denv_table_init(table);
 	}
-
-	sem_wait(&table->denv_sem);
 
 	return table;
 }
@@ -549,28 +544,44 @@ int main(int argc, char **argv, char **envp){
 		case LIST: {
 			// -b
 			// denv ls					2
+			// denv ls -x 				3
 			// denv ls -b bind/path 	4
+			// denv ls -xb bind/path 	4
+			// denv ls -bx bind/path 	4
+
+			bool env_ind = false;
 
 			if(argc == 2) {
 
 				table = init();
 				if(table == NULL) goto error;
 
-				denv_table_list_values(table);
+				denv_table_list_values(table, true);
 			} else if (argc == 4) {
 
 				if(strcmp(argv[2], "-b") != 0) {
-					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
-					goto error;
+					if((strcmp(argv[2], "-xb") && strcmp(argv[2], "-bx")) == 0) {
+						env_ind = true;
+					} else {
+						fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
+						goto error;						
+					}
 				}
 			
 				table = init_on_path(argv[3]);
 				if(table == NULL) goto error;
 
-				denv_table_list_values(table);
+				denv_table_list_values(table, env_ind);
+
 			} else if (argc == 3) {
-				fprintf(stderr, "Missing path or too many arguments.\n");
-				goto error;
+
+				if(strcmp(argv[2], "-x") != 0) {
+					fprintf(stderr, "Unknown option \"%s\".\n", argv[2]);
+					goto error;						
+				}
+
+				denv_table_list_values(table, false);
+				
 			} else if (argc > 4) {
 				fprintf(stderr, "Too many arguments.\n");
 				goto error;

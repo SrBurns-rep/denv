@@ -13,15 +13,16 @@
 - [x] Make a man page.
 - [x] Function to clone environment variables.
 - [x] Function to make an file to source environment variables.
-- [ ] Read lock for each variable, single write lock for the entire thing.
-- [ ] Create automated tests.
-- [ ] Benchmark.
 - [ ] Tidy up for release.
-- [ ] Fix bugs.
-- [ ] Prepare for packaging.
 - [ ] Make a package for .deb, .rpm, archlinux and freebsd.
 
+## Need help for this part
+- [ ] Create automated tests.
+- [ ] Benchmark.
+- [ ] Fix bugs.
+
 ## To-do for V2.0
+- [ ] Read lock for each variable, single write lock for the entire thing.
 - [ ] Implement a cofiguration file in toml.
 - [ ] Redesign denv to be expandable.
 - [ ] Function to expand the memory table.
