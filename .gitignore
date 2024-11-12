@@ -29,6 +29,18 @@
 *.x86_64
 *.hex
 
+# Compressed files
+*.zip
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.7z
+*.rar
+*.gz
+*.bz2
+*.xz
+
 # Debug files
 *.dSYM/
 
