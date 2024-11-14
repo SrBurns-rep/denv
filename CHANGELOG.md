@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- Version Index -->
+* [1.0.1](#101)
 * [1.0.0](#100)
 * [0.15.0](#0150)
 * [0.14.0](#0140)
@@ -24,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [0.9.2](#092)
 
 <!-- Changelog Description -->
+## 1.0.1
+
+### Fixed
+* Setting variables with `ELEMENT_IS_FREED` flag wasn't cleaning them causing some variables to vanish from the `denv get` command.
+
 ## 1.0.0
 
 ### Added

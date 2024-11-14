@@ -26,7 +26,7 @@
 
 #define DENV_MAJOR_VERSION 		1
 #define DENV_MINOR_VERSION 		0
-#define DENV_FIX_VERSION 		0
+#define DENV_FIX_VERSION 		1
 
 #if UINTPTR_WIDTH == 8
 #define DENV_MAGIC 				0x44454e5600000000ULL
@@ -203,6 +203,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 				denv_table_write_slice(new_data, name, value);
 
 				e->flags |= flags | ELEMENT_IS_UPDATED;
+				e->flags &= ~(ELEMENT_IS_FREED);
 
 				sem_post(&table->denv_sem);
 				return;
@@ -212,6 +213,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 				denv_table_write_slice(old_data, name, value);
 
 				e->flags |= flags | ELEMENT_IS_UPDATED;
+				e->flags &= ~(ELEMENT_IS_FREED);
 				
 				sem_post(&table->denv_sem);
 				return;
@@ -243,6 +245,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 						denv_table_write_slice(new_data, name, value);
 
 						col_e->flags |= flags | ELEMENT_IS_UPDATED;
+						col_e->flags &= ~(ELEMENT_IS_FREED);
 
 						sem_post(&table->denv_sem);
 						return;
@@ -256,6 +259,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 					denv_table_write_slice(new_data, name, value);
 
 					col_e->flags |= flags | ELEMENT_IS_UPDATED;
+					col_e->flags &= ~(ELEMENT_IS_FREED);
 
 					sem_post(&table->denv_sem);
 					return;
@@ -264,6 +268,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 					denv_table_write_slice(old_data, name, value);
 
 					col_e->flags |= flags | ELEMENT_IS_UPDATED;
+					col_e->flags &= ~(ELEMENT_IS_FREED);
 
 					sem_post(&table->denv_sem);
 					return;
@@ -286,6 +291,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 				denv_table_write_slice(new_data, name, value);
 
 				col_e->flags |= flags | ELEMENT_IS_UPDATED;
+				col_e->flags &= ~(ELEMENT_IS_FREED);
 
 				sem_post(&table->denv_sem);
 				return;				
@@ -306,6 +312,7 @@ void denv_table_set_value(Table *table, char* name, char* value, Word flags){
 		denv_table_write_slice(new_data, name, value);
 
 		e->flags |= flags | ELEMENT_IS_UPDATED;
+		e->flags &= ~(ELEMENT_IS_FREED);
 
 		sem_post(&table->denv_sem);
 	}
