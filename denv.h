@@ -102,9 +102,9 @@ Word denv_round_to_word(size_t size){
 	new_size |= (new_size >> 4);
 	new_size |= (new_size >> 8);
 	new_size |= (new_size >> 16);
-	if(sizeof(Word) == sizeof(uint64_t)){
+#if UINTPTR_WIDTH == 8
 		new_size |= (new_size >> 32);
-	}
+#endif
 	new_size++;
 
 	return new_size;
