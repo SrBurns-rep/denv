@@ -41,6 +41,9 @@
 *.bz2
 *.xz
 
+# Archive files
+*.tar
+
 # Debug files
 *.dSYM/
 
