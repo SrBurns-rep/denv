@@ -573,7 +573,9 @@ void denv_print_version(void){
 
 	version.d = denv_hash(date_time);	// disciminator for compiled versions on the same day
 
-	printf("denv %d.%d.%d.%d\n", version.a, version.b, version.c, version.d);
+	version.d ^= 9733; // xor to generate a bigger number
+
+	printf("denv %d.%d.%d.%04d\n", version.a, version.b, version.c, version.d);
 }
 
 void denv_print_stats_csv(Table *table){

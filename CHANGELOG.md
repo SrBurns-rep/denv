@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Setting variables with `ELEMENT_IS_FREED` flag wasn't cleaning them causing some variables to vanish from the `denv get` command.
 
+### Changed
+* Version build number is now a 4 digit number.
+
 ## 1.0.0
 
 ### Added
