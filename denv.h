@@ -41,6 +41,10 @@
 
 #define DENV_COMPRESSION_LEVEL 	Z_DEFAULT_COMPRESSION
 
+#if !defined(DENV_VERSION_A) || !defined(DENV_VERSION_B) || !defined(DENV_VERSION_C)
+#error "Missing version defines."
+#endif
+
 typedef uintptr_t Word;
 
 typedef enum {
@@ -65,7 +69,7 @@ typedef enum {
 }DenvTableFlags;
 
 typedef struct {
-	Word magic; // added it now
+	Word magic;
 	Word flags;
 	sem_t denv_sem;
 	struct {
@@ -157,9 +161,9 @@ char *denv_get_element_name(Table *table, Word element_index){
 	char *name;
 
 	if(element_index >= DENV_MAX_ELEMENTS){
-		name = (char*) &table->block[table->element.collision_array[element_index].data_index];
+		name = (char*) &table->block[table->element.collision_array[element_index & (DENV_MAX_ELEMENTS - 1)].data_index];
 	} else {
-		name = (char*) &table->block[table->element.array[element_index].data_index];
+		name = (char*) &table->block[table->element.array[element_index & (DENV_MAX_ELEMENTS - 1)].data_index];
 	}
 	return name;
 }
@@ -437,6 +441,8 @@ bool denv_element_on_update(Table *table, Element *element) {
 
 bool denv_await_element(Table *table, char *name, time_t nsec){
 	Element *e = denv_table_get_element(table, name);
+
+    if(e == NULL) return false;
 	
 	struct timespec ts = {};
 	ts.tv_sec = 0;
@@ -451,6 +457,7 @@ bool denv_await_element(Table *table, char *name, time_t nsec){
 		nanosleep(&ts, NULL);
 	}
 
+    return true;
 }
 
 void denv_table_delete_value(Table *table, char *name){
@@ -552,30 +559,18 @@ bool denv_shmem_destroy(char *filename){
 
 	if (shared_block_id == DENV_IPC_RESULT_ERROR) {
 		fprintf(stderr, "%s: %s at line %i\n", strerror(errno), __FUNCTION__, __LINE__);
-		return NULL;
+		return false;
 	}
 	return (shmctl(shared_block_id, IPC_RMID, NULL) != DENV_IPC_RESULT_ERROR);
 }
 
 void denv_print_version(void){
-	struct {
-		int a;
-		int b;
-		int c;
-		int d;
-	}version;
 
-	version.a = DENV_MAJOR_VERSION;
-	version.b = DENV_MINOR_VERSION;
-	version.c = DENV_FIX_VERSION;
+    // disciminator for compiled versions on the same day
+	int disc = denv_hash(__DATE__ __TIME__);
 
-	char *date_time = __DATE__ __TIME__;
-
-	version.d = denv_hash(date_time);	// disciminator for compiled versions on the same day
-
-	version.d ^= 9733; // xor to generate a bigger number
-
-	printf("denv %d.%d.%d.%04d\n", version.a, version.b, version.c, version.d);
+	disc ^= 9733; // xor to generate a bigger number
+	printf("denv %d.%d.%d.%04d\n", DENV_VERSION_A, DENV_VERSION_B, DENV_VERSION_C, disc);
 }
 
 void denv_print_stats_csv(Table *table){
