@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Warning for 32 bit systems.
 
 ### Changed
-* Version build number is now a 4 digit number.
+* Versioning system now uses a file named version with denv version in it.
 
 ## 1.0.0
 
