@@ -20,6 +20,14 @@ Denv creates a shared memory instance for storing variables for general usage. I
 * `zlib`
 * `A POSIX-compatible shell (bash, zsh, fish, etc.)`
 
+## Installation
+```shell
+$ git clone https://github.com/SrBurns-rep/denv.git
+$ cd denv
+$ ./build.sh
+$ sudo mv denv /usr/local/bin
+```
+
 ## Supported systems
 **Denv** is designed for Linux/BSD systems with shared memory support. Tested systems include:
 * Arch Linux

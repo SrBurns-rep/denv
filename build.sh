@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -ex
+
 version=($(cat version | tr '.' ' '))
 
 if [ "$1" = "debug" ]
