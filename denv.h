@@ -570,6 +570,11 @@ void denv_print_version(void){
 	int disc = denv_hash(__DATE__ __TIME__);
 
 	disc ^= 9733; // xor to generate a bigger number
+
+#ifdef DEBUG_ON
+	printf("denv %d.%d.%d.%04d (DEBUG)\n", DENV_VERSION_A, DENV_VERSION_B, DENV_VERSION_C, disc);
+	return;
+#endif
 	printf("denv %d.%d.%d.%04d\n", DENV_VERSION_A, DENV_VERSION_B, DENV_VERSION_C, disc);
 }
 

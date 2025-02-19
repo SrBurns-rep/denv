@@ -1061,7 +1061,9 @@ int main(int argc, char **argv, char **envp){
 
 				sigprocmask(SIG_BLOCK, &set, NULL);
 
-				printf("Waiting until SIGTERM...\n");
+				int pid = getpid();
+
+				printf("PID: %i Waiting until SIGTERM...\n", pid);
 
 				openlog("DENV", LOG_PID | LOG_CONS, LOG_USER);
 
