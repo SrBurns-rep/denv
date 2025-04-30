@@ -9,9 +9,10 @@ if [ "$1" = "debug" ]
     case $OS in
         Linux)
         	gcc main.c -o denv -lz -g -Og -fsanitize=address,undefined -Wall -Wextra -DDENV_VERSION_A=${version[0]} -DDENV_VERSION_B=${version[1]} -DDENV_VERSION_C=${version[2]} -DDEBUG_ON
-        NetBSD)
         ;;
+        NetBSD)
             gcc main.c -o denv -lz -lrt -g -Og -Wall -Wextra -DDENV_VERSION_A=${version[0]} -DDENV_VERSION_B=${version[1]} -DDENV_VERSION_C=${version[2]} -DDEBUG_ON
+        ;;
         FreeBSD
         ;;
         OpenBSD)
@@ -30,7 +31,7 @@ then
         NetBSD)
             gcc main.c -o denv -lz -lrt -O2 -Wall -Wextra -DDENV_VERSION_A=${version[0]} -DDENV_VERSION_B=${version[1]} -DDENV_VERSION_C=${version[2]}
         ;;
-        FreeBSD
+        FreeBSD)
         ;;
         OpenBSD)
         ;;
