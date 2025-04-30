@@ -4,7 +4,7 @@
 
 Denv creates a shared memory instance for storing variables for general usage. It enables an easy way to communicate between shell processes. This shared memory instance is globally shared among any call to denv, and denv blocks its call until the command is complete.
 
-:warning: :construction: **Warning:** Denv is still under development, don't rely on it for anything critical.
+:warning: :construction: **Warning:** Denv needs more testing, don't rely on it for anything critical.
 
 <br>
 
@@ -18,7 +18,7 @@ Denv creates a shared memory instance for storing variables for general usage. I
 ## Dependencies
 * `gcc`
 * `zlib`
-* `A POSIX-compatible shell (bash, zsh, fish, etc.)`
+* `bash`
 
 ## Installation
 ```shell

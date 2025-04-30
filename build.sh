@@ -11,6 +11,7 @@ if [ "$1" = "debug" ]
         	gcc main.c -o denv -lz -g -Og -fsanitize=address,undefined -Wall -Wextra -DDENV_VERSION_A=${version[0]} -DDENV_VERSION_B=${version[1]} -DDENV_VERSION_C=${version[2]} -DDEBUG_ON
         NetBSD)
         ;;
+            gcc main.c -o denv -lz -lrt -g -Og -Wall -Wextra -DDENV_VERSION_A=${version[0]} -DDENV_VERSION_B=${version[1]} -DDENV_VERSION_C=${version[2]} -DDEBUG_ON
         FreeBSD
         ;;
         OpenBSD)
@@ -27,6 +28,7 @@ then
         	gcc main.c -o denv -lz -O2 -Wall -Wextra -DDENV_VERSION_A=${version[0]} -DDENV_VERSION_B=${version[1]} -DDENV_VERSION_C=${version[2]}
         ;;
         NetBSD)
+            gcc main.c -o denv -lz -lrt -O2 -Wall -Wextra -DDENV_VERSION_A=${version[0]} -DDENV_VERSION_B=${version[1]} -DDENV_VERSION_C=${version[2]}
         ;;
         FreeBSD
         ;;
