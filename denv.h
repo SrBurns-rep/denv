@@ -439,6 +439,7 @@ bool denv_element_on_update(Table *table, Element *element) {
 	return false;
 }
 
+// Doing polling is considered bad, I'm looking for a better way to do this
 bool denv_await_element(Table *table, char *name, time_t nsec){
 	Element *e = denv_table_get_element(table, name);
 
