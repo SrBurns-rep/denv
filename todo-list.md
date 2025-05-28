@@ -13,19 +13,22 @@
 - [x] Make a man page.
 - [x] Function to clone environment variables.
 - [x] Function to make an file to source environment variables.
-- [ ] Add a daemon.
+- [x] Add a daemon.
+- [ ] Fix the daemon.
+- [ ] Make variables able to store binary data
 - [ ] Tidy up for release.
 - [ ] Make a package for .deb, .rpm, archlinux and freebsd.
 
-## Need help for this part
-- [ ] Create automated tests.
-- [ ] Benchmark.
-- [ ] Fix bugs.
+**Need help for this part:**
+- [ ] Test denv
+    - [ ] Create automated tests.
+    - [ ] Benchmark.
+    - [ ] Fix bugs.
 
 ## To-do for V2.0
 - [ ] Read lock for each variable, single write lock for the entire thing.
-- [ ] Implement a cofiguration file in toml.
 - [ ] Redesign denv to be expandable.
-- [ ] Function to expand the memory table.
+    - [ ] Function to expand the memory table.
+    - [ ] Implement a cofiguration file in toml.
 - [ ] Add support for locales.
-- [ ] Maybe add cryptography and access management.
+- [ ] Maybe add cryptography and access management. (needs feedback from the users)
