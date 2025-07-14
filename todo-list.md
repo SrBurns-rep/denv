@@ -14,6 +14,7 @@
 - [x] Function to clone environment variables.
 - [x] Function to make an file to source environment variables.
 - [x] Add a daemon.
+
 **Priority:**
 - [ ] Use `make` for build instead of `build.sh`.
 - [ ] Parse options into a struct in `main.c`.
