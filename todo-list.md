@@ -14,10 +14,15 @@
 - [x] Function to clone environment variables.
 - [x] Function to make an file to source environment variables.
 - [x] Add a daemon.
+**Priority:**
+- [ ] Use `make` for build instead of `build.sh`.
+- [ ] Parse options into a struct in `main.c`.
+- [ ] Reduce code coupling in `main` to simplify parsing.
 - [ ] Fix the daemon.
+
+**Release:**
 - [ ] Make variables able to store binary data
-- [ ] Tidy up for release.
-- [ ] Make a package for .deb, .rpm, archlinux and freebsd.
+- [ ] Make a package for .deb, .rpm, Arch Linux and FreeBSD.
 
 **Need help for this part:**
 - [ ] Test denv
