@@ -1059,7 +1059,7 @@ int main(int argc, char **argv, char **envp) {
                 // Check if file exists, move to .old and then save new file
                 if (check_path(save_file_path)) {
                     char new_path[PATH_BUFFER_LENGHT] = {0};
-                    strncpy(new_path, save_file_path, PATH_BUFFER_LENGHT);
+                    strncpy(new_path, save_file_path, PATH_BUFFER_LENGHT - 1);
                     strncat_s(new_path, ".old", PATH_BUFFER_LENGHT);
                     int ren_err = rename(save_file_path, new_path);
                     if (ren_err == -1) {
