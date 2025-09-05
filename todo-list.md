@@ -17,7 +17,7 @@
 
 **Priority:**
 - [ ] Use `make` for build instead of `build.sh`.
-- [ ] Parse options into a struct in `main.c`.
+- [x] Parse options into a struct in `main.c`.
 - [ ] Reduce code coupling in `main` to simplify parsing.
 - [ ] Fix the daemon.
 

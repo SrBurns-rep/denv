@@ -187,10 +187,8 @@ denv_element_has_collision
    element, it also edits the element if the name match it also do collision
    handling
 */
-void denv_table_set_value(Table *table, char *name, char *value, Word flags) {
+void _denv_table_set_value(Table *table, char *name, char *value, Word flags) {
     assert(table != NULL && name != NULL);
-
-    sem_wait(&table->denv_sem);
 
     Word hash = denv_hash(name);
     Element *e = &table->element.array[hash];
@@ -217,7 +215,6 @@ void denv_table_set_value(Table *table, char *name, char *value, Word flags) {
                 e->flags |= flags | ELEMENT_IS_UPDATED;
                 e->flags &= ~(ELEMENT_IS_FREED);
 
-                sem_post(&table->denv_sem);
                 return;
             } else {
                 // rewrite over old data
@@ -227,7 +224,6 @@ void denv_table_set_value(Table *table, char *name, char *value, Word flags) {
                 e->flags |= flags | ELEMENT_IS_UPDATED;
                 e->flags &= ~(ELEMENT_IS_FREED);
 
-                sem_post(&table->denv_sem);
                 return;
             }
 
@@ -267,7 +263,6 @@ void denv_table_set_value(Table *table, char *name, char *value, Word flags) {
                         col_e->flags |= flags | ELEMENT_IS_UPDATED;
                         col_e->flags &= ~(ELEMENT_IS_FREED);
 
-                        sem_post(&table->denv_sem);
                         return;
                     }
                 }
@@ -284,7 +279,6 @@ void denv_table_set_value(Table *table, char *name, char *value, Word flags) {
                     col_e->flags |= flags | ELEMENT_IS_UPDATED;
                     col_e->flags &= ~(ELEMENT_IS_FREED);
 
-                    sem_post(&table->denv_sem);
                     return;
                 } else {
                     void *old_data = (void *)&table->block[col_e->data_index];
@@ -293,7 +287,6 @@ void denv_table_set_value(Table *table, char *name, char *value, Word flags) {
                     col_e->flags |= flags | ELEMENT_IS_UPDATED;
                     col_e->flags &= ~(ELEMENT_IS_FREED);
 
-                    sem_post(&table->denv_sem);
                     return;
                 }
 
@@ -318,7 +311,6 @@ void denv_table_set_value(Table *table, char *name, char *value, Word flags) {
                 col_e->flags |= flags | ELEMENT_IS_UPDATED;
                 col_e->flags &= ~(ELEMENT_IS_FREED);
 
-                sem_post(&table->denv_sem);
                 return;
             }
         }
@@ -338,9 +330,17 @@ void denv_table_set_value(Table *table, char *name, char *value, Word flags) {
 
         e->flags |= flags | ELEMENT_IS_UPDATED;
         e->flags &= ~(ELEMENT_IS_FREED);
-
-        sem_post(&table->denv_sem);
     }
+}
+
+void denv_table_set_value(Table *table, char *name, char *value, Word flags) {
+    assert(table != NULL && name != NULL);
+
+    sem_wait(&table->denv_sem);
+
+        _denv_table_set_value(table, name, value, flags);
+
+    sem_post(&table->denv_sem);
 }
 
 char *_denv_table_get_value(Table *table, char *name) {
@@ -618,7 +618,7 @@ bool denv_shmem_destroy(char *filename) {
 
 void denv_print_version(void) {
 
-    // disciminator for compiled versions on the same day
+    // discriminator for compiled versions on the same day
     int disc = denv_hash(__DATE__ __TIME__);
 
     disc ^= 9733; // xor to generate a bigger number
@@ -876,6 +876,7 @@ Table *denv_load_from_file(Table *table, char *pathname) {
 }
 
 int denv_exec(Table *table, char *program_path, char **argv) {
+    assert(table != NULL && program_path != NULL);
 
     sem_wait(&table->denv_sem);
 
@@ -887,7 +888,7 @@ int denv_exec(Table *table, char *program_path, char **argv) {
              (ELEMENT_IS_USED | ELEMENT_IS_FREED | ELEMENT_IS_ENV)) ==
             (ELEMENT_IS_USED | ELEMENT_IS_ENV)) {
             char *name = (char *)&table->block[e->data_index];
-            char *value = denv_table_get_value(table, name);
+            char *value = _denv_table_get_value(table, name);
 
             if (name[0] && value) {
                 if (setenv(name, value, 1) != 0) {
@@ -901,7 +902,7 @@ int denv_exec(Table *table, char *program_path, char **argv) {
              (ELEMENT_IS_USED | ELEMENT_IS_FREED | ELEMENT_IS_ENV)) ==
             (ELEMENT_IS_USED | ELEMENT_IS_ENV)) {
             char *name = (char *)&table->block[coll_e->data_index];
-            char *value = denv_table_get_value(table, name);
+            char *value = _denv_table_get_value(table, name);
 
             if (name[0] && value) {
                 if (setenv(name, value, 1) != 0) {
