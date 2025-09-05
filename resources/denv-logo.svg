@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
+
 <!-- Denv Logo © 2024 by Caio Burns Lessa is licensed under CC BY-SA 4.0 -->
+
 <svg
    width="512"
    height="512"
@@ -8,7 +10,7 @@
    version="1.1"
    id="svg1"
    sodipodi:docname="denv-logo.svg"
-   inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -24,14 +26,14 @@
      inkscape:deskcolor="#505050"
      inkscape:document-units="px"
      inkscape:zoom="0.98994949"
-     inkscape:cx="255.06352"
-     inkscape:cy="233.34524"
+     inkscape:cx="256.07367"
+     inkscape:cy="354.56354"
      inkscape:window-width="1366"
-     inkscape:window-height="761"
+     inkscape:window-height="743"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="g180" />
   <defs
      id="defs1">
     <inkscape:path-effect
@@ -800,16 +802,11 @@
          d="m 268.08203,206.80469 v 9.72656 h 2.46484 c 4.88282,0 9.08203,0.60547 12.59766,1.81641 3.55469,1.17187 6.32813,3.00781 8.32031,5.50781 3.90625,4.84375 5.85938,13.73047 5.85938,26.66015 0,12.89063 -1.97266,21.77735 -5.91797,26.66016 -3.90625,4.92187 -10.85938,7.38281 -20.85938,7.38281 h -1.21679 c 0.63617,1.5396 0.96484,3.29897 0.96484,5.29297 0,0.91146 -0.1072,1.97418 -0.32422,3.18946 -0.0746,0.41016 -0.19319,0.82597 -0.33984,1.24414 h 1.15039 c 13.35937,0 23.20312,-3.55469 29.53125,-10.66407 6.32812,-7.10937 9.49219,-18.10546 9.49219,-32.98828 0,-15 -3.16407,-26.05469 -9.49219,-33.16406 -6.32813,-7.10937 -16.17188,-10.66406 -29.53125,-10.66406 z"
          style="font-size:120px;font-family:'Hack Nerd Font Mono';-inkscape-font-specification:'Hack Nerd Font Mono';fill:#ffffff;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"
          id="path175" />
-      <text
-         xml:space="preserve"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:130.667px;font-family:'Hack Nerd Font Mono';-inkscape-font-specification:'Hack Nerd Font Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-         x="215.41502"
-         y="296.7323"
-         id="text176"><tspan
-           sodipodi:role="line"
-           id="tspan176"
-           x="215.41502"
-           y="296.7323">!</tspan></text>
+      <path
+         d="m 246.10391,229.54853 v -28.392 h 16.90759 v 28.392 l -4.27475,36.17588 h -7.72007 z m 8.6133,71.0119 q -4.46616,0 -7.40106,-3.0625 -2.9349,-2.93491 -2.9349,-7.97528 0,-4.97658 2.9349,-7.91148 2.9987,-2.99871 7.40106,-2.99871 4.40235,0 7.40106,2.99871 2.9349,2.9349 2.9349,7.91148 0,5.04037 -2.9349,7.97528 -2.9349,3.0625 -7.40106,3.0625 z"
+         id="text176"
+         style="font-size:130.667px;font-family:'Hack Nerd Font Mono';-inkscape-font-specification:'Hack Nerd Font Mono, Normal';fill:#ffffff;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"
+         aria-label="!" />
     </g>
     <g
        id="g180"
@@ -824,27 +821,17 @@
              d="m 268.08203,206.80469 v 9.72656 h 2.46484 c 4.88282,0 9.08203,0.60547 12.59766,1.81641 3.55469,1.17187 6.32813,3.00781 8.32031,5.50781 3.90625,4.84375 5.85938,13.73047 5.85938,26.66015 0,12.89063 -1.97266,21.77735 -5.91797,26.66016 -3.90625,4.92187 -10.85938,7.38281 -20.85938,7.38281 h -1.21679 c 0.63617,1.5396 0.96484,3.29897 0.96484,5.29297 0,0.91146 -0.1072,1.97418 -0.32422,3.18946 -0.0746,0.41016 -0.19319,0.82597 -0.33984,1.24414 h 1.15039 c 13.35937,0 23.20312,-3.55469 29.53125,-10.66407 6.32812,-7.10937 9.49219,-18.10546 9.49219,-32.98828 0,-15 -3.16407,-26.05469 -9.49219,-33.16406 -6.32813,-7.10937 -16.17188,-10.66406 -29.53125,-10.66406 z"
              style="font-size:120px;font-family:'Hack Nerd Font Mono';-inkscape-font-specification:'Hack Nerd Font Mono';fill:#ffffff;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"
              id="path176" />
-          <text
-             xml:space="preserve"
-             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:130.667px;font-family:'Hack Nerd Font Mono';-inkscape-font-specification:'Hack Nerd Font Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-             x="215.41502"
-             y="296.7323"
-             id="text177"><tspan
-               sodipodi:role="line"
-               id="tspan177"
-               x="215.41502"
-               y="296.7323">!</tspan></text>
+          <path
+             d="m 246.10391,229.54853 v -28.392 h 16.90759 v 28.392 l -4.27475,36.17588 h -7.72007 z m 8.6133,71.0119 q -4.46616,0 -7.40106,-3.0625 -2.9349,-2.93491 -2.9349,-7.97528 0,-4.97658 2.9349,-7.91148 2.9987,-2.99871 7.40106,-2.99871 4.40235,0 7.40106,2.99871 2.9349,2.9349 2.9349,7.91148 0,5.04037 -2.9349,7.97528 -2.9349,3.0625 -7.40106,3.0625 z"
+             id="text177"
+             style="font-size:130.667px;font-family:'Hack Nerd Font Mono';-inkscape-font-specification:'Hack Nerd Font Mono, Normal';fill:#ffffff;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"
+             aria-label="!" />
         </g>
-        <text
-           xml:space="preserve"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:106.667px;font-family:'Hack Nerd Font Mono';-inkscape-font-specification:'Hack Nerd Font Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-           x="232.62456"
-           y="624.19006"
-           id="text178"><tspan
-             sodipodi:role="line"
-             id="tspan178"
-             x="232.62456"
-             y="624.19006">ENV</tspan></text>
+        <path
+           d="m 242.88501,546.4294 h 46.14597 v 8.8542 h -35.62511 v 23.0209 h 34.06261 v 8.8542 h -34.06261 v 28.17717 h 36.6147 v 8.85419 h -47.13556 z m 61.1981,0 h 13.33338 l 26.25008,64.01062 V 546.4294 h 10.15628 v 77.76066 h -13.33337 l -26.25009,-64.01061 v 64.01061 h -10.15628 z m 59.9481,0 h 10.88545 l 18.22923,68.90647 18.2813,-68.90647 h 10.88546 l -22.76049,77.76066 H 386.7917 Z"
+           id="text178"
+           style="font-size:106.667px;font-family:'Hack Nerd Font Mono';-inkscape-font-specification:'Hack Nerd Font Mono, Normal';fill:#ffffff;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"
+           aria-label="ENV" />
       </g>
     </g>
     <text

@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- Version Index -->
-* [1.0.5](#152)
+* [1.0.4](#104)
 * [1.0.1](#101)
 * [1.0.0](#100)
 * [0.15.0](#0150)
@@ -33,7 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Major rewrite of `main.c`.
-* `build.sh` was replaced by a `Makefile`.
 * Improved error mensages.
 
 ### Added
