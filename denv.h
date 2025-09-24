@@ -478,9 +478,6 @@ bool denv_element_on_update(Table *table, Element *element) {
 bool denv_await_element(Table *table, char *name, time_t nsec) {
     Element *e = denv_table_get_element(table, name);
 
-    if (e == NULL)
-        return false;
-
     struct timespec ts = {};
     ts.tv_sec = 0;
     ts.tv_nsec = nsec;

@@ -16,12 +16,12 @@
 - [x] Add a daemon.
 
 **Priority:**
-- [ ] Use `make` for build instead of `build.sh`.
 - [x] Parse options into a struct in `main.c`.
-- [ ] Reduce code coupling in `main` to simplify parsing.
-- [ ] Fix the daemon.
+- [x] Fix the daemon.
+- [ ] Make multiple `await`s on the same variable return when the variable change.
 
 **Release:**
+- [ ] Use `make` for build instead of `build.sh`.
 - [ ] Make variables able to store binary data
 - [ ] Make a package for .deb, .rpm, Arch Linux and FreeBSD.
 
@@ -33,6 +33,7 @@
 
 ## To-do for V2.0
 - [ ] Read lock for each variable, single write lock for the entire thing.
+- [ ] Parse a config file in toml.
 - [ ] Redesign denv to be expandable.
     - [ ] Function to expand the memory table.
     - [ ] Implement a cofiguration file in toml.
