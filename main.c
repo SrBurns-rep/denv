@@ -126,25 +126,6 @@ void print_help(void) {
         "\t--csv (default)\n");
 }
 
-int make_bind_path(char *path_buf) {
-    struct stat st = {0};
-
-    if (stat(path_buf, &st) == -1) {
-        int err = mkdir(path_buf, 0766);
-        if (err) {
-            char *str_err = strerror(err);
-            print_err(
-                "Could not create bind path for denv: %s\n"
-                "Suggestion, create path using: mkdir -p $HOME/.local/share/denv\n",
-                str_err
-            );
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
 char *get_bind_path(char *path_buf, size_t buf_len) {
 
     char *home_path = getenv("HOME");
@@ -163,8 +144,6 @@ char *get_bind_path(char *path_buf, size_t buf_len) {
     char *denv_path = DENV_BIND_PATH;
 
     strncat_s(path_buf, denv_path, BUFF_SIZE);
-
-    make_bind_path(path_buf);
 
     return path_buf;
 }
@@ -189,6 +168,11 @@ char g_path_buffer[PATH_BUFFER_LENGHT] = {0};
 
 char *load_path() {
     char *file_name = get_bind_path(g_path_buffer, PATH_BUFFER_LENGHT);
+
+    if(!denv_directory_exists(file_name)) {
+        denv_mkdir_parents(file_name, PATH_BUFFER_LENGHT);
+    }
+    
     return file_name;
 }
 

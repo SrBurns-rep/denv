@@ -43,5 +43,3 @@ else
     esac
 	strip denv
 fi
-
-mkdir -p $HOME/.local/share/denv

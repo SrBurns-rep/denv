@@ -12,6 +12,7 @@
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
@@ -993,6 +994,128 @@ void denv_make_env_save_file(Table *table, FILE *file) {
             }
         }
     }
+}
+
+// String Pools
+
+typedef struct StrPool{
+    size_t capacity;
+    size_t head;
+    char block[];
+} StrPool;
+
+StrPool *denv_str_pool_init(size_t capacity) {
+    StrPool *new_pool = malloc(sizeof(StrPool) + capacity);
+
+    if(new_pool) {
+        new_pool->capacity = capacity;
+        new_pool->head = 0;
+    }    
+
+    return new_pool;
+}
+
+char *denv_str_pool_push(StrPool *pool, char *str) {
+
+    size_t len_str = strlen(str) + 1;
+
+    if(len_str >= pool->capacity - pool->head) {
+        pool->capacity *= 2;
+        pool = realloc(pool, sizeof(*pool) + pool->capacity);
+        assert(pool != NULL && "Not enough memory");
+    }
+
+    char *out = &pool->block[pool->head];
+
+    memcpy(out, str, len_str);
+
+    pool->head += len_str;
+
+    return out;
+}
+
+char *denv_str_pool_rename(StrPool *pool, size_t head, char *str) {
+
+    if(head != 0 && head < pool->capacity) {
+        if(pool->block[head -1] != '\0') {
+            while(--head) {
+                if(pool->block[head] == '\0') break;
+            }
+            head++;
+        }
+    } else {
+        return NULL;
+    }
+
+    memset(&pool->block[head], '\0', strlen(&pool->block[head]));
+
+    return denv_str_pool_push(pool, str);
+}
+
+char *denv_str_pool_pop(StrPool *pool) {
+    if(pool->head == 0) return (char*)&pool->block[0];
+
+    if(pool->head - 2 > 0) {
+        pool->head -= 2;
+
+        if(pool->block[pool->head] == '\0') {    
+            while(pool->head > 0 && pool->block[pool->head] == '\0') {
+                pool->head--;
+            }
+        }
+    }
+
+    while(pool->head > 0 && pool->block[pool->head] != '\0') {
+        pool->head--;
+    }
+
+    if(pool->head > 0) {
+        pool->head++;
+    }
+
+    return (char*)&pool->block[pool->head];
+}
+
+int denv_directory_exists(const char *path) {
+    struct stat stats;
+
+    if (stat(path, &stats) == 0) {
+        return S_ISDIR(stats.st_mode);
+    }
+    return 0;
+}
+
+
+int denv_mkdir_parents(char *path_buff, size_t size) {
+
+    StrPool *pool = denv_str_pool_init(128);
+
+    while(!denv_directory_exists(path_buff)) {
+
+        for(size_t i = strlen(path_buff); i >= 0; i--) {
+            if(path_buff[i] == '/') {
+                denv_str_pool_push(pool, &path_buff[i]);
+                path_buff[i] = '\0';
+                break;
+            }
+        }
+    }
+
+    while(pool->head > 0) {
+        char *pop = denv_str_pool_pop(pool);
+
+        size_t catlen = size - strlen(path_buff) - strlen(pop) - 1;
+        //assert((strlen(path_buff) + strlen(pop) + 1) < size);
+
+        strncat(path_buff, pop, catlen);
+
+        int err = mkdir(path_buff, 0755);
+        if (err) return err;
+    }
+
+    free(pool);
+
+    return 0;  
 }
 
 #endif /* _DENV_H */
