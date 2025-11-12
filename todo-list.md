@@ -21,9 +21,7 @@
 - [ ] Make multiple `await`s on the same variable return when the variable change.
 
 **Release:**
-- [ ] Use `make` for build instead of `build.sh`.
-- [ ] Make variables able to store binary data
-- [ ] Make a package for .deb, .rpm, Arch Linux and FreeBSD.
+- [ ] Make a package for .deb, .rpm, Arch Linux and NetBSD.
 
 **Need help for this part:**
 - [ ] Test denv
@@ -31,9 +29,13 @@
     - [ ] Benchmark.
     - [ ] Fix bugs.
 
-## To-do for V2.0
+## To-do for V1.1
+- [ ] Add function `append`
+- [ ] Make variables able to store binary data
 - [ ] Read lock for each variable, single write lock for the entire thing.
 - [ ] Parse a config file in toml.
+
+## Backlog
 - [ ] Redesign denv to be expandable.
     - [ ] Function to expand the memory table.
     - [ ] Implement a cofiguration file in toml.
