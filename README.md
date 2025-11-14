@@ -43,6 +43,10 @@ Get a variable value
 ```shell
 $ denv get "variable_name"
 ```
+Append data to a variable
+```shell
+$ denv ap "variable_name" "more data"
+```
 Remove a variable
 ```shell
 $ denv rm "variable_name"

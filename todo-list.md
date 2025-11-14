@@ -1,5 +1,17 @@
 # Denv to-do list
 
+## To-do for V2.0
+- [x] Add function `append`
+- [ ] Read lock for each variable, single write lock for the entire thing.
+- [ ] Parse a config file in toml.
+
+**Need help for this part:**
+- [ ] Make a package for .deb, .rpm, Arch Linux and NetBSD.
+- [ ] Test denv
+    - [ ] Create automated tests.
+    - [ ] Benchmark.
+    - [ ] Fix bugs.
+
 ## To-do for V1.0
 - [x] Option to show current version.
 - [x] Function to clear freed elements.
@@ -14,28 +26,12 @@
 - [x] Function to clone environment variables.
 - [x] Function to make an file to source environment variables.
 - [x] Add a daemon.
-
-**Priority:**
 - [x] Parse options into a struct in `main.c`.
 - [x] Fix the daemon.
-- [ ] Make multiple `await`s on the same variable return when the variable change.
-
-**Release:**
-- [ ] Make a package for .deb, .rpm, Arch Linux and NetBSD.
-
-**Need help for this part:**
-- [ ] Test denv
-    - [ ] Create automated tests.
-    - [ ] Benchmark.
-    - [ ] Fix bugs.
-
-## To-do for V1.1
-- [ ] Add function `append`
-- [ ] Make variables able to store binary data
-- [ ] Read lock for each variable, single write lock for the entire thing.
-- [ ] Parse a config file in toml.
 
 ## Backlog
+- [ ] Make variables able to store binary data
+- [ ] Make multiple `await`s on the same variable return when the variable change.
 - [ ] Redesign denv to be expandable.
     - [ ] Function to expand the memory table.
     - [ ] Implement a cofiguration file in toml.

@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- Version Index -->
+* [1.1.0](#110)
 * [1.0.6](#106)
 * [1.0.5](#105)
 * [1.0.4](#104)
@@ -28,20 +29,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [0.9.2](#092)
 
 <!-- Changelog Description -->
+
+## 1.1.0
+
+### Added
+* `ap` command to append new data to a variable.
+
 ## 1.0.6
 
 ### Fixed
-* Now denv can create its shared memory path recursively on `$HOME/.local/share/denv`
+* Now denv can create its shared memory path recursively on `$HOME/.local/share/denv`.
 
 ## 1.0.5
 
 ### Fixed
-* `await` command returning when it shouldn't
+* `await` command returning when it shouldn't.
 
 ## 1.0.4
 
 ### Fixed
-* Race condition with the `get` command when in a loop
+* Race condition with the `get` command when in a loop.
 
 ### Changed
 * Major rewrite of `main.c`.

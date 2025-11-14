@@ -1,5 +1,6 @@
 /*
         DENV MAIN
+        LICENSE: GPLv3
 */
 
 #include "denv.h"
@@ -62,6 +63,7 @@ typedef enum {
     CLONE,
     EXPORT,
     DAEMON,
+    APPEND
 } command_states;
 
 typedef enum {
@@ -88,6 +90,7 @@ static const struct {
     {"await", "b:", AWAIT},   {"exec", "b:", EXEC},
     {"clone", "b:", CLONE},   {"export", "b:", EXPORT},
     {"daemon", "b:", DAEMON},
+    {"ap", "s:", APPEND}
 };
 
 void print_help(void) {
@@ -100,6 +103,7 @@ void print_help(void) {
         "\tget [-b] <key>                 Gets the value stored in the key.\n"
         "\trm [-b] <key>                  Removes the key and value pair.\n"
         "\tls [-x/-b]                     Lists all keys.\n"
+        "\tap [-s]                        Append data to a variable value.\n"
         "\tdrop [-f/-b]                   Deletes everything in the attached "
         "shmem.\n"
         "\tstats [-b] / --<format>        Print stats.\n"
@@ -121,6 +125,7 @@ void print_help(void) {
         "option -e:        Set variable as an envrionment variable.\n"
         "option -f:        Force yes to operations that prompts the user.\n"
         "option -x:        Suppress environment variable indicator on listing.\n"
+        "option -s:        String separator.\n"
         "\n"
         "stats --<format>:\n"
         "\t--csv (default)\n");
@@ -278,6 +283,7 @@ typedef struct {
     char *name;
     char *value;
     char *save_path;
+    char *separator;
     char *exec_command;
     char **exec_command_args;
     int print_option;
@@ -718,6 +724,42 @@ CmdLine parse_commands(int argc, char **argv) {
                 cmd.error = PARSE_ERROR_TOO_MANY_ARGUMENTS;
             }
             break;
+        case APPEND:
+            //denv ap var "more data"   --> append with new line (4)
+            //denv ap -s ":" var "$HOME/.local/bin" --> append with separator string (6)
+            if(argc < 4) {
+                cmd.error = PARSE_ERROR_NOT_ENOUGH_ARGUMENTS;
+                break;
+            } else if (argc == 4) {
+                cmd.name = argv[2];
+
+                if (strcmp(argv[3], "-") == 0) {
+                    cmd.is_stdin = true;
+                } else {
+                    cmd.value = argv[3];
+                }
+            } else if (argc == 5) {
+                cmd.error = PARSE_ERROR_MISSING_OPTION_OR_EXTRA_ARGUMENT;
+                break;
+            } else if (argc == 6) {
+            //denv ap -s ":" var "$HOME/.local/bin"
+
+                if (strcmp(argv[2], "-s") != 0) {
+                    cmd.error = PARSE_ERROR_UNKNOWN_OPTION;
+                    break;
+                }
+                cmd.separator = argv[3];
+                cmd.name = argv[4];
+                
+                if (strcmp(argv[5], "-") == 0) {
+                    cmd.is_stdin = true;
+                } else {
+                    cmd.value = argv[5];
+                }
+            } else {
+                cmd.error = PARSE_ERROR_TOO_MANY_ARGUMENTS;
+            }
+            break;
         default:    /* UNDEFINED, HELP or VERSION */
             break;
     }
@@ -1070,6 +1112,109 @@ int main(int argc, char **argv, char **envp) {
 
 
         } break;
+
+        case APPEND: {
+
+            char *old_value = denv_table_get_value(table, name);
+
+            if (cmd.is_stdin) {
+                char *buffer = calloc(BUFF_SIZE, sizeof(char));
+                if (!buffer) {
+                    print_err("Couldn't allocate more memory.\n");
+                    error = -1;
+                    break;
+                }
+                size_t len = 0, acc = 0;
+                do {
+                    if(acc) {
+                        buffer = realloc(buffer, acc + BUFF_SIZE);
+                        if (!buffer) {
+                            print_err("Couldn't reallocate more memory.\n");
+                            error = -1;
+                            break;
+                        }               
+                    }
+                    len = fread(buffer + acc, sizeof(char), BUFF_SIZE, stdin);
+                    if(ferror(stdin) != 0) {
+                        print_err("Couldn't read from stdin.\n");
+                        free(buffer);
+                        error = -1;
+                        break;
+                    }
+                    acc += len;
+                } while(len == BUFF_SIZE);
+
+                size_t new_buffer_lenght = 0;
+                if(old_value) {
+
+                    if(old_value) {
+                        new_buffer_lenght += strlen(old_value);
+                    }
+
+                    new_buffer_lenght += strlen(buffer) + 4;
+                    
+                    if(cmd.separator) {
+                        new_buffer_lenght += strlen(cmd.separator);
+                    }
+
+                    char *new_buffer = malloc(new_buffer_lenght);
+                    if(new_buffer == NULL) {
+                        print_err("Couldn't allocate more memory.\n");
+                        error = -1;
+                        break;
+                    }
+
+                    if(cmd.separator) {
+                        snprintf(new_buffer, new_buffer_lenght, "%s%s%s", old_value, cmd.separator, buffer);
+                    } else {
+                        snprintf(new_buffer, new_buffer_lenght, "%s\n%s", old_value, buffer);
+                    }
+
+                    denv_table_set_value(table, name, new_buffer, 0);
+
+                    free(new_buffer);
+                  
+                } else {
+                    denv_table_set_value(table, name, buffer, 0);
+                }
+
+                free(buffer);
+            } else {
+
+                size_t new_buffer_lenght = 0;
+
+                if(old_value) {
+                    new_buffer_lenght += strlen(old_value);
+                }
+
+                new_buffer_lenght += strlen(value) + 4;
+
+                if(cmd.separator) {
+                    new_buffer_lenght += strlen(cmd.separator);
+                }
+
+                char *new_buffer = malloc(new_buffer_lenght);
+                if(new_buffer == NULL) {
+                        print_err("Couldn't allocate more memory.\n");
+                        error = -1;
+                        break;
+                }
+
+                if(cmd.separator) {
+                    snprintf(new_buffer, new_buffer_lenght, "%s%s%s", old_value, cmd.separator, value);
+                } else if (old_value != NULL){
+                    snprintf(new_buffer, new_buffer_lenght, "%s\n%s", old_value, value);
+                } else {
+                    snprintf(new_buffer, new_buffer_lenght, "%s", value);
+                }
+
+                denv_table_set_value(table, name, new_buffer, 0);
+
+                free(new_buffer);
+            
+            }
+        } break;
+        
         default:
 
     }
